@@ -1,5 +1,5 @@
-# arquitetura-computadores
-Aulas do CEFET
+# Arquitetura de Computadores
+Ementa - CEFET
 
 1. Introdução a circuitos sequenciais: Flip-flop SR, D, JK.
 2. Processadores, microarquitetura.
