@@ -1,0 +1,26 @@
+
+	            G L O B A L   R E F E R E N C E S
+
+	             Name               Value        Type
+	==============================|=======|===============
+	CR                               000A         CONSTANT
+	FIM_TEXTO                        0040         CONSTANT
+	IO_READ                          FFFF         CONSTANT
+	IO_WRITE                         FFFE         CONSTANT
+	IO_STATUS                        FFFD         CONSTANT
+	INITIAL_SP                       FDFF         CONSTANT
+	CURSOR                           FFFC         CONSTANT
+	CURSOR_INIT                      FFFF         CONSTANT
+	ROW_POSITION                     0000         CONSTANT
+	COL_POSITION                     0000         CONSTANT
+	ROW_SHIFT                        0008         CONSTANT
+	COLUMN_SHIFT                     0008         CONSTANT
+	Text                             8000           STRING
+	RowIndex                         801C         VARIABLE
+	ColumnIndex                      801D         VARIABLE
+	TextIndex                        801E         VARIABLE
+	INT0                             FE00         VARIABLE
+	WriteCharacter                   0002            LABEL
+	Main                             001E            LABEL
+	Cycle                            002A            LABEL
+	Halt                             002B            LABEL

@@ -1,0 +1,111 @@
+\documentclass[10pt]{article}
+\usepackage[applemac]{inputenc}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{epsfig}
+\usepackage[left=2cm,top=2cm,right=2cm,bottom=2cm]{geometry}
+\usepackage[lined, ruled, vlined]{algorithm2e}
+\usepackage[normalem]{ulem}
+\usepackage[abs]{overpic}
+\usepackage{hyperref}
+
+\newcounter{QuestionCounter}
+\setcounter{QuestionCounter}{1}
+
+\begin{document}
+
+\begin{center}
+\rule{18.1cm}{0.2mm} \\
+\end{center}
+\begin{tabular}{lc}
+\thispagestyle{empty}
+\multirow{4}{25mm}{\includegraphics[width=1.5cm]{logo.eps}}  
+\hspace{0.4cm} & {\bf \Large Computer Architecture } \\
+\hspace{0.4cm} & {\bf Professor Lu’s Tarrataca}\\
+\hspace{0.4cm} & {\bf Laboratory 1}\\
+\hspace{0.4cm} & {Centro Federal de Educa\c c‹o Tecnol—gica Celso Suckow da Fonseca}\\
+\end{tabular}\\ \\
+\centerline{\rule{18.1cm}{0.2mm} \\}
+\vspace{0.1cm}
+
+
+%\begin{multicols*}{2}
+
+\noindent{\Large \bf Objectives:}
+
+\vspace{0.25cm} 
+Introduction to 
+
+\begin{itemize}
+		
+	\item P3 processor;
+	
+	\item P3 programming language:
+	
+	\begin{itemize}
+		
+		\item data transfer instructions;
+		
+		\item address modes;
+
+	\end{itemize}
+	
+	\item P3 simulator:
+	
+	\begin{itemize}
+		
+		\item Execution of the environment;
+		
+		\item Testing the program;
+
+	\end{itemize}
+
+\end{itemize}
+
+\vspace{0.25cm} 
+\noindent{\Large \bf P3 Processor:}
+
+\vspace{0.25cm} 
+The P3 processor was developed at the \href{http://www.ulisboa.pt/}{University of Lisbon} - \href{https://tecnico.ulisboa.pt/en/}{Instituto Superior TŽcnico} for the students of the \href{https://fenix.tecnico.ulisboa.pt/disciplinas/IAC45179/2016-2017/1-semestre}{``Computer Architecture''} course. The P3 is a 16-bit RISC processor containing 8 generic registers, allows for the normal set of arithmetic, logic and control instructions. The processor also has several mechanism for processing inputs (\textit{e.g.:} reading from the keyboard) and outputs (\textit{e.g.} printing to a screen). It also features an interruption processing mechanism as well as a microprogramming component. All of the informations regarding the processor can be found on the manual that is provided for the laboratories.
+
+\vspace{0.5cm} 
+\noindent{\Large \bf P3 Simulator and Assembly:}
+
+\vspace{0.25cm} 
+
+For this section we will be using the file ``lab1.as'':
+
+\begin{enumerate}
+
+	\item To compile the assembly code the command ``./p3as-linux lab1.as'' needs to executed on the terminal;
+	
+	\item To run the simulator the command ``java -jar p3sim.jar'' needs to be executed on the terminal;
+	
+	\begin{enumerate}
+	
+		\item To load the compiled binary file choose ``Ficheiro $\rightarrow$ Carrega Programa'';
+		
+		\item Before you execute the program load the I/O window by choosing ``Ver $\rightarrow$ Janela de Texto '';
+		
+		\item Execute the program by pressing the button ``Corre''
+		
+	\end{enumerate}
+	
+	\item Examine the code;
+
+\end{enumerate}
+
+
+
+
+
+
+
+\end{document}
