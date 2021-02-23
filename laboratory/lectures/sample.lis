@@ -1,0 +1,14 @@
+
+	            G L O B A L   R E F E R E N C E S
+
+	             Name               Value        Type
+	==============================|=======|===============
+	WRITE                            FFFE         CONSTANT
+	INITIAL_SP                       FDFF         CONSTANT
+	CURSOR                           FFFC         CONSTANT
+	CURSOR_INIT                      FFFF         CONSTANT
+	FIM_TEXTO                        0040         CONSTANT
+	Text                             8000           STRING
+	Main                             0002            LABEL
+	Cycle                            0024            LABEL
+	Halt                             0025            LABEL
