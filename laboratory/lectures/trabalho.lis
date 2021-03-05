@@ -1,0 +1,44 @@
+
+	            G L O B A L   R E F E R E N C E S
+
+	             Name               Value        Type
+	==============================|=======|===============
+	WRITE                            FFFE         CONSTANT
+	INITIAL_SP                       FDFF         CONSTANT
+	CURSOR                           FFFC         CONSTANT
+	CURSOR_INIT                      FFFF         CONSTANT
+	NUM_COLUMNS                      0050         CONSTANT
+	NUM_ROWS                         0018         CONSTANT
+	ROW_SHIFT                        0008         CONSTANT
+	INI_COLUMN                       0000         CONSTANT
+	INI_ROW                          0000         CONSTANT
+	END_COLUMN                       004F         CONSTANT
+	END_ROW                          0017         CONSTANT
+	WALL_COLUMN_1                    0015         CONSTANT
+	WALL_COLUMN_2                    0037         CONSTANT
+	WALL_ROW                         0001         CONSTANT
+	END_WALL_COLUMN                  004F         CONSTANT
+	END_WALL_ROW                     0017         CONSTANT
+	RowIndex                         8000         VARIABLE
+	ColumnIndex                      8001         VARIABLE
+	TextIndex                        8002         VARIABLE
+	ImprimeColuna                    0002            LABEL
+	CicloImprimeColuna               0005            LABEL
+	FimImprimeColuna                 0019            LABEL
+	ImprimeLinha                     001D            LABEL
+	CicloImprimeLinha                0020            LABEL
+	FimImprimeLinha                  0034            LABEL
+	ImprimeParede                    0038            LABEL
+	CicloImprimeParede               003B            LABEL
+	FimImprimeParede                 004F            LABEL
+	ICP                              0053            LABEL
+	CicloICP                         0056            LABEL
+	FimICP                           006A            LABEL
+	CicloImprimeColunaCental         006E            LABEL
+	ImprimeCaminhoBola               00A4            LABEL
+	ImprimeCantoEsquerdo             00BC            LABEL
+	ImprimeCantoDireito              00E3            LABEL
+	InicializaTela                   010A            LABEL
+	Main                             0137            LABEL
+	Cycle                            0141            LABEL
+	Halt                             0142            LABEL

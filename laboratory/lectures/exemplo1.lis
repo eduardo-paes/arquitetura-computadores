@@ -1,0 +1,36 @@
+
+	            G L O B A L   R E F E R E N C E S
+
+	             Name               Value        Type
+	==============================|=======|===============
+	CR                               000A         CONSTANT
+	FIM_TEXTO                        0040         CONSTANT
+	IO_READ                          FFFF         CONSTANT
+	IO_WRITE                         FFFE         CONSTANT
+	IO_STATUS                        FFFD         CONSTANT
+	SP_INICIAL                       FDFF         CONSTANT
+	VarTexto1                        8000           STRING
+	VarTexto2                        8008           STRING
+	VarTexto3                        8032           STRING
+	VarMenu0                         8048           STRING
+	VarMenu1                         8082           STRING
+	VarMenu2                         80B1           STRING
+	VarPrompt                        80D5           STRING
+	TextoFim                         80D9           STRING
+	VarPalavra                       80EA         VARIABLE
+	Dummy                            80EB            TABLE
+	LeCar                            0002            LABEL
+	EscCar                           0008            LABEL
+	MudaLinha                        000D            LABEL
+	EscString                        0014            LABEL
+	Ciclo                            0016            LABEL
+	FimEsc                           001F            LABEL
+	EscMenu                          0024            LABEL
+	EscPrompt                        003B            LABEL
+	Inicio                           0044            LABEL
+	Opcao                            0049            LABEL
+	Texto3                           0058            LABEL
+	Texto2                           005D            LABEL
+	Texto1                           0062            LABEL
+	EscFim                           0067            LABEL
+	Halt                             006B            LABEL
