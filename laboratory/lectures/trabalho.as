@@ -25,6 +25,9 @@ END_WALL_ROW		EQU		23d
 RowIndex    WORD        0d
 ColumnIndex WORD        0d
 TextIndex   WORD        0d
+DotIndex    WORD        0d
+Count       WORD        0d
+NumDots     WORD        0d
 
 ;------------------------------------------------------------------------------
 ; ZONA IV: instruções
@@ -51,9 +54,9 @@ CicloImprimeColuna:     MOV   R1, M[ ColumnIndex ]    ; R1 Recebe valor do índi
                         INC   M[ RowIndex ]           ; Incrementa o índice das linhas
                         JMP   CicloImprimeColuna      ; Chama a função novamente
 
-FimImprimeColuna:       POP   R1
+FimImprimeColuna:       POP   R3
                         POP   R2
-                        POP   R3 
+                        POP   R1 
                         RET                           ; RTI = Return from interruption (restaura o valor do PC no final da instrução e o valor do ALU)
 
 ;------------------------------------------------------------------------------
@@ -75,9 +78,9 @@ CicloImprimeLinha:      MOV   R1, M[ ColumnIndex ]                ; R1 Recebe va
                         INC   M[ ColumnIndex ]                    ; Incrementa o índice das linhas
                         JMP   CicloImprimeLinha                   ; Chama a função novamente
 
-FimImprimeLinha:        POP   R1
+FimImprimeLinha:        POP   R3
                         POP   R2
-                        POP   R3 
+                        POP   R1 
                         RET                                       ; RTI = Return from interruption (restaura o valor do PC no final da instrução e o valor do ALU)
 
 ;------------------------------------------------------------------------------
@@ -99,9 +102,9 @@ CicloImprimeParede:     MOV   R1, M[ ColumnIndex ]    ; R1 Recebe valor do índi
                         INC   M[ RowIndex ]           ; Incrementa o índice das linhas
                         JMP   CicloImprimeParede      ; Chama a função novamente
 
-FimImprimeParede:       POP   R1
+FimImprimeParede:       POP   R3
                         POP   R2
-                        POP   R3 
+                        POP   R1 
                         RET 
 
 ;------------------------------------------------------------------------------
@@ -123,9 +126,9 @@ CicloICP:               MOV   R1, M[ ColumnIndex ]    ; R1 Recebe valor do índi
                         INC   M[ RowIndex ]           ; Incrementa o índice das linhas
                         JMP   CicloICP                ; Chama a função novamente
 
-FimICP:                 POP   R1
+FimICP:                 POP   R3
                         POP   R2
-                        POP   R3 
+                        POP   R1 
                         RET 
 ;------------------------------------------------------------------------------
 ; Função ImprimeColunaCentral - Imprime Coluna Central
@@ -163,8 +166,8 @@ CicloImprimeColunaCental:     PUSH  R4
                               INC   M[ColumnIndex]
                               CALL  ImprimeParede            ; Imprime Parede
 
-                              POP   R4
                               POP   R5
+                              POP   R4
                               RET
 
 ;------------------------------------------------------------------------------
@@ -174,19 +177,17 @@ ImprimeCaminhoBola:     PUSH  R4
                         PUSH  R5
                         MOV   R4, 7d
                         MOV   M[RowIndex], R4
-                        MOV   R4, R5
-                        MOV   M[ColumnIndex], R4
+                        MOV   M[ColumnIndex], R5
                         CALL  ImprimeParede            ; Imprime Parede
 
                         MOV   R4, 7d
                         MOV   M[RowIndex], R4
                         INC   R5
-                        MOV   R4, R5
-                        MOV   M[ColumnIndex], R4
+                        MOV   M[ColumnIndex], R5
                         CALL  ImprimeParede            ; Imprime Parede
 
-                        POP   R4
                         POP   R5
+                        POP   R4
                         RET
 
 ;------------------------------------------------------------------------------
@@ -218,9 +219,9 @@ ImprimeCantoEsquerdo:   PUSH  R1
                         MOV   M[ CURSOR ], R1
                         MOV   M[ WRITE ], R3
 
-                        POP   R1
-                        POP   R2
                         POP   R3
+                        POP   R2
+                        POP   R1
                         RET
 
 ;------------------------------------------------------------------------------
@@ -252,9 +253,187 @@ ImprimeCantoDireito:    PUSH  R1
                         MOV   M[ CURSOR ], R1
                         MOV   M[ WRITE ], R3
 
-                        POP   R1
-                        POP   R2
                         POP   R3
+                        POP   R2
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Função ImprimeCanaleta - Imprime Canaleta Central
+;------------------------------------------------------------------------------
+IniciaSequenciaPontos:  PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+
+ImprimeSequenciaPontos: MOV   R3, M[ DotIndex ]
+                        CMP   R3, M[ NumDots ]
+                        JMP.Z FimSequenciaPontos
+                        MOV   R1, M[ ColumnIndex ]
+                        MOV   R2, M[ RowIndex ]
+                        MOV   R3, '.'
+                        SHL   R2, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[ CURSOR ], R1
+                        MOV   M[ WRITE ], R3
+                        INC   M[ DotIndex ]
+                        INC   M[ ColumnIndex ]
+                        JMP   ImprimeSequenciaPontos
+
+FimSequenciaPontos:     POP   R3
+                        POP   R2 
+                        POP   R1
+                        RET
+
+ImprimeCanaleta:        PUSH  R1    ; Coluna
+                        PUSH  R2    ; Linha
+                        PUSH  R3    ; Caracter / Auxiliar
+
+                        MOV   R3, 0d
+                        MOV   M[ DotIndex ], R3
+                        MOV   R3, 27d
+                        MOV   M[ ColumnIndex ], R3
+                        CALL  IniciaSequenciaPontos
+                        
+                        MOV   R1, M[ ColumnIndex ]
+                        MOV   R2, M[ RowIndex ]
+                        MOV   R3, '|'
+                        SHL   R2, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[ CURSOR ], R1
+                        MOV   M[ WRITE ], R3
+
+                        MOV   R1, 45d
+                        MOV   M[ ColumnIndex ], R1
+                        MOV   R2, M[ RowIndex ]
+                        SHL   R2, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[ CURSOR ], R1
+                        MOV   M[ WRITE ], R3
+
+                        INC   M[ ColumnIndex ]
+                        MOV   R3, 0d
+                        MOV   M[ DotIndex ], R3
+                        CALL  IniciaSequenciaPontos
+
+                        POP   R3
+                        POP   R2
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Função ImprimeInclinacaoEsq - Imprime Inclinação do Lado Esquerdo
+;------------------------------------------------------------------------------
+ImprimeInclinacaoEsq:   PUSH  R1
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 15d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 1d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 16d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 2d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 17d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 3d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 18d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 4d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 19d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 5d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Função ImprimeInclinacaoDir - Imprime Inclinação do Lado Direita
+;------------------------------------------------------------------------------
+ImprimeInclinacaoDir:   PUSH  R1
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 50d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 15d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 1d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 49d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 16d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 2d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 48d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 17d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 3d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 47d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 18d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 4d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        MOV   R1, 0d
+                        MOV   M[DotIndex], R1
+                        MOV   R1, 46d
+                        MOV   M[ColumnIndex], R1
+                        MOV   R1, 19d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 5d
+                        MOV   M[NumDots], R1
+                        CALL  IniciaSequenciaPontos
+
+                        POP   R1
                         RET
 
 ;------------------------------------------------------------------------------
@@ -287,11 +466,28 @@ InicializaTela:   PUSH  R4
                   MOV   R5, 51d
                   CALL  ImprimeCaminhoBola
 
-                  CALL  ImprimeCantoEsquerdo
-                  CALL  ImprimeCantoDireito
+                  CALL  ImprimeCantoEsquerdo    ; Canto Superior Esquerdo
+                  CALL  ImprimeCantoDireito     ; Canto Superior Direito
 
-                  POP   R4
+                  CALL  ImprimeInclinacaoEsq    ; Declividade do lado Esquerdo
+                  CALL  ImprimeInclinacaoDir    ; Declividade do lado Direito
+
+                  MOV   R4, 5d
+                  MOV   M[NumDots], R4
+                  MOV   R4, 20d
+                  MOV   M[RowIndex], R4         ; Linha 20
+                  CALL  ImprimeCanaleta
+
+                  MOV   R4, 21d
+                  MOV   M[RowIndex], R4         ; Linha 21
+                  CALL  ImprimeCanaleta
+
+                  MOV   R4, 22d
+                  MOV   M[RowIndex], R4         ; Linha 22
+                  CALL  ImprimeCanaleta
+
                   POP   R5
+                  POP   R4
                   RET
 
 ;------------------------------------------------------------------------------

@@ -22,6 +22,9 @@
 	RowIndex                         8000         VARIABLE
 	ColumnIndex                      8001         VARIABLE
 	TextIndex                        8002         VARIABLE
+	DotIndex                         8003         VARIABLE
+	Count                            8004         VARIABLE
+	NumDots                          8005         VARIABLE
 	ImprimeColuna                    0002            LABEL
 	CicloImprimeColuna               0005            LABEL
 	FimImprimeColuna                 0019            LABEL
@@ -36,9 +39,15 @@
 	FimICP                           006A            LABEL
 	CicloImprimeColunaCental         006E            LABEL
 	ImprimeCaminhoBola               00A4            LABEL
-	ImprimeCantoEsquerdo             00BC            LABEL
-	ImprimeCantoDireito              00E3            LABEL
-	InicializaTela                   010A            LABEL
-	Main                             0137            LABEL
-	Cycle                            0141            LABEL
-	Halt                             0142            LABEL
+	ImprimeCantoEsquerdo             00BA            LABEL
+	ImprimeCantoDireito              00E1            LABEL
+	IniciaSequenciaPontos            0108            LABEL
+	ImprimeSequenciaPontos           010B            LABEL
+	FimSequenciaPontos               0123            LABEL
+	ImprimeCanaleta                  0127            LABEL
+	ImprimeInclinacaoEsq             0158            LABEL
+	ImprimeInclinacaoDir             01B5            LABEL
+	InicializaTela                   0212            LABEL
+	Main                             0259            LABEL
+	Cycle                            0263            LABEL
+	Halt                             0264            LABEL
