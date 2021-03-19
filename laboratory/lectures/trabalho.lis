@@ -3,51 +3,54 @@
 
 	             Name               Value        Type
 	==============================|=======|===============
-	WRITE                            FFFE         CONSTANT
-	INITIAL_SP                       FDFF         CONSTANT
 	CURSOR                           FFFC         CONSTANT
 	CURSOR_INIT                      FFFF         CONSTANT
+	END_COLUMN                       004F         CONSTANT
+	END_ROW                          0017         CONSTANT
+	END_WALL_COLUMN                  004F         CONSTANT
+	END_WALL_ROW                     0017         CONSTANT
+	INI_COLUMN                       0000         CONSTANT
+	FIM_TEXTO                        0040         CONSTANT
+	INI_ROW                          0000         CONSTANT
+	INITIAL_SP                       FDFF         CONSTANT
 	NUM_COLUMNS                      0050         CONSTANT
 	NUM_ROWS                         0018         CONSTANT
 	ROW_SHIFT                        0008         CONSTANT
-	INI_COLUMN                       0000         CONSTANT
-	INI_ROW                          0000         CONSTANT
-	END_COLUMN                       004F         CONSTANT
-	END_ROW                          0017         CONSTANT
 	WALL_COLUMN_1                    0015         CONSTANT
 	WALL_COLUMN_2                    0037         CONSTANT
 	WALL_ROW                         0001         CONSTANT
-	END_WALL_COLUMN                  004F         CONSTANT
-	END_WALL_ROW                     0017         CONSTANT
-	RowIndex                         8000         VARIABLE
+	WRITE                            FFFE         CONSTANT
+	CharIndex                        8000         VARIABLE
 	ColumnIndex                      8001         VARIABLE
-	TextIndex                        8002         VARIABLE
-	DotIndex                         8003         VARIABLE
-	Count                            8004         VARIABLE
-	NumDots                          8005         VARIABLE
-	ImprimeColuna                    0002            LABEL
-	CicloImprimeColuna               0005            LABEL
-	FimImprimeColuna                 0019            LABEL
-	ImprimeLinha                     001D            LABEL
-	CicloImprimeLinha                0020            LABEL
-	FimImprimeLinha                  0034            LABEL
-	ImprimeParede                    0038            LABEL
-	CicloImprimeParede               003B            LABEL
-	FimImprimeParede                 004F            LABEL
-	ICP                              0053            LABEL
-	CicloICP                         0056            LABEL
-	FimICP                           006A            LABEL
-	CicloImprimeColunaCental         006E            LABEL
-	ImprimeCaminhoBola               00A4            LABEL
-	ImprimeCantoEsquerdo             00BA            LABEL
-	ImprimeCantoDireito              00E1            LABEL
-	IniciaSequenciaPontos            0108            LABEL
-	ImprimeSequenciaPontos           010B            LABEL
-	FimSequenciaPontos               0123            LABEL
-	ImprimeCanaleta                  0127            LABEL
-	ImprimeInclinacaoEsq             0158            LABEL
-	ImprimeInclinacaoDir             01B5            LABEL
-	InicializaTela                   0212            LABEL
-	Main                             0259            LABEL
-	Cycle                            0263            LABEL
-	Halt                             0264            LABEL
+	Count                            8002         VARIABLE
+	LifeText                         8003           STRING
+	NumDots                          800A         VARIABLE
+	RowIndex                         800B         VARIABLE
+	ScoreText                        800C           STRING
+	TextIndex                        8013         VARIABLE
+	EndColumnIndex                   8014         VARIABLE
+	EndRowIndex                      8015         VARIABLE
+	PrintCenterColumn                0002            LABEL
+	IniciaSequenciaPontos            0045            LABEL
+	ImprimeSequenciaPontos           0048            LABEL
+	FimSequenciaPontos               0060            LABEL
+	ImprimeCanaleta                  0064            LABEL
+	ImprimeAsterisco                 0095            LABEL
+	ImprimeInclinacaoEsq             00A8            LABEL
+	ImprimeInclinacaoDir             0103            LABEL
+	StartScore                       016A            LABEL
+	PrintScore                       0170            LABEL
+	EndScore                         0185            LABEL
+	StartLife                        018A            LABEL
+	PrintLife                        0190            LABEL
+	EndLife                          01A5            LABEL
+	StartHorizontalPrint             01AA            LABEL
+	HorizontalPrint                  01AD            LABEL
+	EndHorizontalPrint               01BF            LABEL
+	StartVerticalPrint               01C3            LABEL
+	VerticalPrint                    01C6            LABEL
+	EndVerticalPrint                 01D8            LABEL
+	StartScreen                      01DC            LABEL
+	Main                             02C5            LABEL
+	Cycle                            02CF            LABEL
+	Halt                             02D0            LABEL
