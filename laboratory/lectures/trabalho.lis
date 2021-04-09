@@ -6,6 +6,10 @@
 	CURSOR                           FFFC         CONSTANT
 	CURSOR_INIT                      FFFF         CONSTANT
 	END_COLUMN                       004F         CONSTANT
+	END_LFU_ROW                      0010         CONSTANT
+	END_LFD_ROW                      0016         CONSTANT
+	END_RFU_ROW                      0010         CONSTANT
+	END_RFD_ROW                      0016         CONSTANT
 	END_ROW                          0017         CONSTANT
 	END_WALL_COLUMN                  004F         CONSTANT
 	END_WALL_ROW                     0017         CONSTANT
@@ -13,8 +17,14 @@
 	FIM_TEXTO                        0040         CONSTANT
 	INI_ROW                          0000         CONSTANT
 	INITIAL_SP                       FDFF         CONSTANT
+	LF_COL_START                     0021         CONSTANT
+	LF_ROW_START                     0013         CONSTANT
 	NUM_COLUMNS                      0050         CONSTANT
 	NUM_ROWS                         0018         CONSTANT
+	OFF                              0000         CONSTANT
+	ON                               0001         CONSTANT
+	RF_COL_START                     002C         CONSTANT
+	RF_ROW_START                     0013         CONSTANT
 	ROW_SHIFT                        0008         CONSTANT
 	WALL_COLUMN_1                    0015         CONSTANT
 	WALL_COLUMN_2                    0037         CONSTANT
@@ -22,35 +32,64 @@
 	WRITE                            FFFE         CONSTANT
 	CharIndex                        8000         VARIABLE
 	ColumnIndex                      8001         VARIABLE
-	Count                            8002         VARIABLE
-	LifeText                         8003           STRING
-	NumDots                          800A         VARIABLE
-	RowIndex                         800B         VARIABLE
-	ScoreText                        800C           STRING
-	TextIndex                        8013         VARIABLE
-	EndColumnIndex                   8014         VARIABLE
-	EndRowIndex                      8015         VARIABLE
-	PrintCenterColumn                0002            LABEL
-	IniciaSequenciaPontos            0045            LABEL
-	ImprimeSequenciaPontos           0048            LABEL
-	FimSequenciaPontos               0060            LABEL
-	ImprimeCanaleta                  0064            LABEL
-	ImprimeAsterisco                 0095            LABEL
-	ImprimeInclinacaoEsq             00A8            LABEL
-	ImprimeInclinacaoDir             0103            LABEL
-	StartScore                       016A            LABEL
-	PrintScore                       0170            LABEL
-	EndScore                         0185            LABEL
-	StartLife                        018A            LABEL
-	PrintLife                        0190            LABEL
-	EndLife                          01A5            LABEL
-	StartHorizontalPrint             01AA            LABEL
-	HorizontalPrint                  01AD            LABEL
-	EndHorizontalPrint               01BF            LABEL
-	StartVerticalPrint               01C3            LABEL
-	VerticalPrint                    01C6            LABEL
-	EndVerticalPrint                 01D8            LABEL
-	StartScreen                      01DC            LABEL
-	Main                             02C5            LABEL
-	Cycle                            02CF            LABEL
-	Halt                             02D0            LABEL
+	LifeText                         8002           STRING
+	NumDots                          8009         VARIABLE
+	RowIndex                         800A         VARIABLE
+	ScoreText                        800B           STRING
+	TextIndex                        8012         VARIABLE
+	EndColumnIndex                   8013         VARIABLE
+	EndRowIndex                      8014         VARIABLE
+	LeftFlipperUp                    8015         VARIABLE
+	RightFlipperUp                   8016         VARIABLE
+	INT0                             FE00         VARIABLE
+	INT1                             FE01         VARIABLE
+	StartClearLFD                    0002            LABEL
+	ClearLFD                         000F            LABEL
+	EndClearLFD                      0025            LABEL
+	StartMoveLFU                     0029            LABEL
+	MoveLeftFlipperUp                0038            LABEL
+	EndMoveLFU                       004E            LABEL
+	StartClearLFU                    0056            LABEL
+	ClearLFU                         0063            LABEL
+	EndClearLFU                      0079            LABEL
+	StartMoveLFD                     007D            LABEL
+	MoveLeftFlipperDown              008C            LABEL
+	EndMoveLFD                       00A2            LABEL
+	MoveLeftFlipper                  00AA            LABEL
+	StartClearRFD                    00B5            LABEL
+	ClearRFD                         00C2            LABEL
+	EndClearRFD                      00D8            LABEL
+	StartMoveRFU                     00DC            LABEL
+	MoveRightFlipperUp               00EB            LABEL
+	EndMoveRFU                       0101            LABEL
+	StartClearRFU                    0109            LABEL
+	ClearRFU                         0116            LABEL
+	EndClearRFU                      012C            LABEL
+	StartMoveRFD                     0130            LABEL
+	MoveRightFlipperDown             013F            LABEL
+	EndMoveRFD                       0155            LABEL
+	MoveRightFlipper                 015D            LABEL
+	PrintCenterColumn                0168            LABEL
+	IniciaSequenciaPontos            01AB            LABEL
+	ImprimeSequenciaPontos           01AE            LABEL
+	FimSequenciaPontos               01C6            LABEL
+	ImprimeCanaleta                  01CA            LABEL
+	ImprimeAsterisco                 01FB            LABEL
+	ImprimeInclinacaoEsq             020E            LABEL
+	ImprimeInclinacaoDir             0269            LABEL
+	StartScore                       02D0            LABEL
+	PrintScore                       02D6            LABEL
+	EndScore                         02EB            LABEL
+	StartLife                        02F0            LABEL
+	PrintLife                        02F6            LABEL
+	EndLife                          030B            LABEL
+	StartHorizontalPrint             0310            LABEL
+	HorizontalPrint                  0313            LABEL
+	EndHorizontalPrint               0325            LABEL
+	StartVerticalPrint               0329            LABEL
+	VerticalPrint                    032C            LABEL
+	EndVerticalPrint                 033E            LABEL
+	StartScreen                      0342            LABEL
+	Main                             0413            LABEL
+	Cycle                            041D            LABEL
+	Halt                             041E            LABEL

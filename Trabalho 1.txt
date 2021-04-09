@@ -1,0 +1,11 @@
+Trabalho 1
+==========
+
+Criar um jogo (Flipper, Pinball);
+Construir a tela com caracteres;
+
+Inicializando o simulador P3 (simulador de um processador):
+  $ java -jar p3sim.jar trabalho.exe
+
+Compilando o código em assembler:
+  $ .\p3as-win.exe .\trabalho.as
