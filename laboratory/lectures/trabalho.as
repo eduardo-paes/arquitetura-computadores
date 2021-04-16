@@ -2,6 +2,8 @@
 ; ZONA I: Constants
 ;------------------------------------------------------------------------------
       
+      ATIV_TEMP               EQU         FFF7h
+      CONFIG_TEMP             EQU         FFF6h
       CURSOR		      EQU         FFFCh
       CURSOR_INIT		      EQU	      FFFFh
       END_COLUMN			EQU		79d
@@ -25,6 +27,8 @@
       RF_COL_START            EQU         44d
       RF_ROW_START            EQU         19d
       ROW_SHIFT			EQU		8d
+      START_BALL_COL          EQU         53d
+      START_BALL_ROW          EQU         22d
       WALL_COLUMN_1		EQU		21d
       WALL_COLUMN_2		EQU		55d
       WALL_ROW			EQU		1d
@@ -34,6 +38,8 @@
 ; ZONA II: Variables
 ;------------------------------------------------------------------------------
                               ORIG        8000h
+      BallColumnIndex         WORD        53d
+      BallRowIndex            WORD        22d
       CharIndex               WORD        0d
       ColumnIndex             WORD        0d
       LifeText		      STR         'LIFES:', FIM_TEXTO
@@ -45,6 +51,10 @@
       EndRowIndex             WORD        0d
       LeftFlipperUp           WORD        OFF
       RightFlipperUp          WORD        OFF
+      StopTimer               WORD        0d
+      HitRightCorner          WORD        0d
+      HitLeftCorner           WORD        0d
+
 
 ;------------------------------------------------------------------------------
 ; ZONA III: Interruption
@@ -54,11 +64,130 @@
       INT0        WORD    MoveLeftFlipper
       INT1        WORD    MoveRightFlipper
 
+                  ORIG    FE0Fh
+      INT15       WORD    Timer
+
 ;------------------------------------------------------------------------------
 ; ZONA IV: Functions
 ;------------------------------------------------------------------------------
       ORIG  0000h                   ; Inicializa programa na posição
       JMP   Main                    ; Salta para a função inicial
+
+;------------------------------------------------------------------------------
+; Function EndBallMovements - Ball movement
+;------------------------------------------------------------------------------
+      VerifyRightCornerHit:   PUSH   R1
+                              MOV    R1, 0d
+                              MOV    M[HitRightCorner], R1    
+                              MOV    R1, M[BallColumnIndex]
+                              CMP    R1, START_BALL_COL
+                              JMP.NZ VerificationEnd 
+                              MOV    R1, M[BallRowIndex]
+                              CMP    R1, 2d
+                              JMP.NZ VerificationEnd 
+                              MOV    R1, 1d
+                              MOV    M[HitRightCorner], R1
+                              
+      VerificationEnd:        POP   R1
+                              RET
+
+      StartBallMoves:   DEC   M[BallRowIndex]
+                        CALL  VerifyRightCornerHit
+                        JMP   EndMoveBall
+
+      LeDoDiagonalMove: DEC   M[BallColumnIndex]
+                        INC   M[BallRowIndex]
+                        JMP   EndMoveBall
+
+      RiDoDiagonalMove: INC   M[BallColumnIndex]
+                        INC   M[BallRowIndex]
+                        JMP   EndMoveBall
+
+      LeUpDiagonalMove: DEC   M[BallColumnIndex]
+                        DEC   M[BallRowIndex]
+                        JMP   EndMoveBall
+
+      RiUpDiagonalMove: INC   M[BallColumnIndex]
+                        DEC   M[BallRowIndex]
+                        JMP   EndMoveBall
+
+      MoveBall:         PUSH  R1
+                        
+                        MOV   R1, M[HitRightCorner]
+                        CMP   R1, 1d
+                        JMP.Z LeDoDiagonalMove
+
+                        MOV   R1, M[BallColumnIndex]
+                        CMP   R1, START_BALL_COL
+                        JMP.Z StartBallMoves
+
+      EndMoveBall:      POP   R1
+                        RET
+;------------------------------------------------------------------------------
+; Function Timer - Define ball timer and basic functions
+;------------------------------------------------------------------------------
+      SetTimer:         PUSH  R1
+                        MOV   R1, 1d                  ; Set Timer time
+                        MOV   M[CONFIG_TEMP], R1
+                        MOV   R1, 1d                  ; Set Timer status
+                        MOV   M[ATIV_TEMP], R1
+                        POP   R1
+                        RET
+
+      PrintBall:        PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+
+                        MOV   R1, M[BallRowIndex]
+                        MOV   R2, M[BallColumnIndex]
+                        MOV   R3, 'o'
+                        SHL   R1, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[CURSOR], R1
+                        MOV   M[WRITE], R3
+
+                        POP   R3
+                        POP   R2
+                        POP   R1
+                        RET
+
+      ClearBall:        PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+
+                        MOV   R1, M[BallRowIndex]
+                        MOV   R2, M[BallColumnIndex]
+                        MOV   R3, ' '
+                        SHL   R1, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[CURSOR], R1
+                        MOV   M[WRITE], R3
+
+                        POP   R3
+                        POP   R2
+                        POP   R1
+                        RET
+
+
+
+      Timer:            PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+
+                        CALL  ClearBall
+                        CALL  MoveBall
+                        CALL  PrintBall
+
+                        MOV   R1, M[StopTimer]
+                        CMP   R1, 1d
+                        JMP.Z EndTimerDef
+
+                        CALL  SetTimer
+
+      EndTimerDef:      POP   R3
+                        POP   R2
+                        POP   R1
+                        RTI
 
 ;------------------------------------------------------------------------------
 ; Function MoveLeftFlipperUp
@@ -844,7 +973,8 @@
                   MOV	R1, CURSOR_INIT	      ; We need to initialize the cursor 
                   MOV	M[ CURSOR ], R1	      ; with value CURSOR_INIT
 
-                  CALL StartScreen
+                  CALL StartScreen              ; Print screen components
+                  CALL  SetTimer                ; Define timer settings
 
       Cycle: 	BR		Cycle	
       Halt:       BR		Halt
