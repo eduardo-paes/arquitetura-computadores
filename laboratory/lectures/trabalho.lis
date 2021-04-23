@@ -16,6 +16,7 @@
 	END_WALL_COLUMN                  004F         CONSTANT
 	END_WALL_ROW                     0017         CONSTANT
 	INI_COLUMN                       0000         CONSTANT
+	FALSE                            0000         CONSTANT
 	FIM_TEXTO                        0040         CONSTANT
 	INI_ROW                          0000         CONSTANT
 	INITIAL_SP                       FDFF         CONSTANT
@@ -30,6 +31,7 @@
 	ROW_SHIFT                        0008         CONSTANT
 	START_BALL_COL                   0035         CONSTANT
 	START_BALL_ROW                   0016         CONSTANT
+	TRUE                             0001         CONSTANT
 	WALL_COLUMN_1                    0015         CONSTANT
 	WALL_COLUMN_2                    0037         CONSTANT
 	WALL_ROW                         0001         CONSTANT
@@ -52,68 +54,68 @@
 	HitLeftCorner                    801B         VARIABLE
 	INT0                             FE00         VARIABLE
 	INT1                             FE01         VARIABLE
+	INT2                             FE02         VARIABLE
 	INT15                            FE0F         VARIABLE
-	VerifyRightCornerHit             0002            LABEL
-	VerificationEnd                  0017            LABEL
-	StartBallMoves                   0019            LABEL
-	LeDoDiagonalMove                 001F            LABEL
-	RiDoDiagonalMove                 0025            LABEL
-	LeUpDiagonalMove                 002B            LABEL
-	RiUpDiagonalMove                 0031            LABEL
-	MoveBall                         0037            LABEL
-	EndMoveBall                      0044            LABEL
-	SetTimer                         0046            LABEL
-	PrintBall                        0051            LABEL
-	ClearBall                        0064            LABEL
-	Timer                            0077            LABEL
-	EndTimerDef                      0088            LABEL
-	StartClearLFD                    008C            LABEL
-	ClearLFD                         0099            LABEL
-	EndClearLFD                      00AF            LABEL
-	StartMoveLFU                     00B3            LABEL
-	MoveLeftFlipperUp                00C2            LABEL
-	EndMoveLFU                       00D8            LABEL
-	StartClearLFU                    00E0            LABEL
-	ClearLFU                         00ED            LABEL
-	EndClearLFU                      0103            LABEL
-	StartMoveLFD                     0107            LABEL
-	MoveLeftFlipperDown              0116            LABEL
-	EndMoveLFD                       012C            LABEL
-	MoveLeftFlipper                  0134            LABEL
-	StartClearRFD                    013F            LABEL
-	ClearRFD                         014C            LABEL
-	EndClearRFD                      0162            LABEL
-	StartMoveRFU                     0166            LABEL
-	MoveRightFlipperUp               0175            LABEL
-	EndMoveRFU                       018B            LABEL
-	StartClearRFU                    0193            LABEL
-	ClearRFU                         01A0            LABEL
-	EndClearRFU                      01B6            LABEL
-	StartMoveRFD                     01BA            LABEL
-	MoveRightFlipperDown             01C9            LABEL
-	EndMoveRFD                       01DF            LABEL
-	MoveRightFlipper                 01E7            LABEL
-	PrintCenterColumn                01F2            LABEL
-	IniciaSequenciaPontos            0235            LABEL
-	ImprimeSequenciaPontos           0238            LABEL
-	FimSequenciaPontos               0250            LABEL
-	ImprimeCanaleta                  0254            LABEL
-	ImprimeAsterisco                 0285            LABEL
-	ImprimeInclinacaoEsq             0298            LABEL
-	ImprimeInclinacaoDir             02F3            LABEL
-	StartScore                       035A            LABEL
-	PrintScore                       0360            LABEL
-	EndScore                         0375            LABEL
-	StartLife                        037A            LABEL
-	PrintLife                        0380            LABEL
-	EndLife                          0395            LABEL
-	StartHorizontalPrint             039A            LABEL
-	HorizontalPrint                  039D            LABEL
-	EndHorizontalPrint               03AF            LABEL
-	StartVerticalPrint               03B3            LABEL
-	VerticalPrint                    03B6            LABEL
-	EndVerticalPrint                 03C8            LABEL
-	StartScreen                      03CC            LABEL
-	Main                             049D            LABEL
-	Cycle                            04A9            LABEL
-	Halt                             04AA            LABEL
+	StartGame                        0002            LABEL
+	VerifyRightCornerHit             0005            LABEL
+	VerifyLeftCornerHit              001C            LABEL
+	VerificationEnd                  0033            LABEL
+	StartBallMoves                   0035            LABEL
+	LeDoDiagonalMove                 003B            LABEL
+	RiDoDiagonalMove                 0041            LABEL
+	LeUpDiagonalMove                 0047            LABEL
+	RiUpDiagonalMove                 004D            LABEL
+	MoveBall                         0053            LABEL
+	EndMoveBall                      0060            LABEL
+	SetTimer                         0062            LABEL
+	PrintBall                        006D            LABEL
+	ClearBall                        0080            LABEL
+	Timer                            0093            LABEL
+	EndTimer                         00A4            LABEL
+	StartClearLFD                    00A8            LABEL
+	ClearLFD                         00B5            LABEL
+	EndClearLFD                      00CB            LABEL
+	StartMoveLFU                     00CF            LABEL
+	MoveLeftFlipperUp                00DE            LABEL
+	EndMoveLFU                       00F4            LABEL
+	StartClearLFU                    00FC            LABEL
+	ClearLFU                         0109            LABEL
+	EndClearLFU                      011F            LABEL
+	StartMoveLFD                     0123            LABEL
+	MoveLeftFlipperDown              0132            LABEL
+	EndMoveLFD                       0148            LABEL
+	MoveLeftFlipper                  0150            LABEL
+	StartClearRFD                    015B            LABEL
+	ClearRFD                         0168            LABEL
+	EndClearRFD                      017E            LABEL
+	StartMoveRFU                     0182            LABEL
+	MoveRightFlipperUp               0191            LABEL
+	EndMoveRFU                       01A7            LABEL
+	StartClearRFU                    01AF            LABEL
+	ClearRFU                         01BC            LABEL
+	EndClearRFU                      01D2            LABEL
+	StartMoveRFD                     01D6            LABEL
+	MoveRightFlipperDown             01E5            LABEL
+	EndMoveRFD                       01FB            LABEL
+	MoveRightFlipper                 0203            LABEL
+	PrintCenterColumn                020E            LABEL
+	PrintObstacle                    0251            LABEL
+	ImprimeCanaleta                  0276            LABEL
+	PrintLeftSlope                   02A0            LABEL
+	PrintRightSlope                  032E            LABEL
+	StartScore                       03BC            LABEL
+	PrintScore                       03C2            LABEL
+	EndScore                         03D7            LABEL
+	StartLife                        03DC            LABEL
+	PrintLife                        03E2            LABEL
+	EndLife                          03F7            LABEL
+	StartHorizontalPrint             03FC            LABEL
+	HorizontalPrint                  03FF            LABEL
+	EndHorizontalPrint               0411            LABEL
+	StartVerticalPrint               0415            LABEL
+	VerticalPrint                    0418            LABEL
+	EndVerticalPrint                 042A            LABEL
+	StartScreen                      042E            LABEL
+	Main                             0521            LABEL
+	Cycle                            052B            LABEL
+	Halt                             052C            LABEL

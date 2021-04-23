@@ -12,9 +12,9 @@
       END_RFU_ROW             EQU		16d
       END_RFD_ROW             EQU		22d
       END_ROW			EQU		23d
-      END_WALL_COLUMN		EQU		79d
       END_WALL_ROW		EQU		23d
       INI_COLUMN			EQU		0d
+      FALSE                   EQU         0d
       FIM_TEXTO               EQU         '@'
       INI_ROW			EQU		0d
       INITIAL_SP              EQU         FDFFh
@@ -28,7 +28,7 @@
       RF_ROW_START            EQU         19d
       ROW_SHIFT			EQU		8d
       START_BALL_COL          EQU         53d
-      START_BALL_ROW          EQU         22d
+      TRUE                    EQU         1d
       WALL_COLUMN_1		EQU		21d
       WALL_COLUMN_2		EQU		55d
       WALL_ROW			EQU		1d
@@ -40,13 +40,10 @@
                               ORIG        8000h
       BallColumnIndex         WORD        53d
       BallRowIndex            WORD        22d
-      CharIndex               WORD        0d
       ColumnIndex             WORD        0d
       LifeText		      STR         'LIFES:', FIM_TEXTO
-      NumDots                 WORD        0d
       RowIndex                WORD        0d
       ScoreText		      STR         'SCORE:', FIM_TEXTO
-      TextIndex               WORD        0d
       EndColumnIndex          WORD        0d
       EndRowIndex             WORD        0d
       LeftFlipperUp           WORD        OFF
@@ -55,7 +52,6 @@
       HitRightCorner          WORD        0d
       HitLeftCorner           WORD        0d
 
-
 ;------------------------------------------------------------------------------
 ; ZONA III: Interruption
 ;------------------------------------------------------------------------------
@@ -63,6 +59,7 @@
                   ORIG    FE00h
       INT0        WORD    MoveLeftFlipper
       INT1        WORD    MoveRightFlipper
+      INT2        WORD    StartGame
 
                   ORIG    FE0Fh
       INT15       WORD    Timer
@@ -74,19 +71,38 @@
       JMP   Main                    ; Salta para a função inicial
 
 ;------------------------------------------------------------------------------
-; Function EndBallMovements - Ball movement
+; Function StartGame - Define Timer after Interruption
+;------------------------------------------------------------------------------
+      StartGame:        CALL  SetTimer
+                        RTI
+;------------------------------------------------------------------------------
+; Function Ball movements
 ;------------------------------------------------------------------------------
       VerifyRightCornerHit:   PUSH   R1
-                              MOV    R1, 0d
+                              MOV    R1, FALSE
                               MOV    M[HitRightCorner], R1    
                               MOV    R1, M[BallColumnIndex]
                               CMP    R1, START_BALL_COL
-                              JMP.NZ VerificationEnd 
+                              JMP.NZ VerificationEnd        ; Verify if is in the initial column
                               MOV    R1, M[BallRowIndex]
-                              CMP    R1, 2d
-                              JMP.NZ VerificationEnd 
-                              MOV    R1, 1d
+                              CMP    R1, 2d                 ; Second row
+                              JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
+                              MOV    R1, TRUE
                               MOV    M[HitRightCorner], R1
+                              JMP    VerificationEnd
+
+      VerifyLeftCornerHit:    PUSH   R1
+                              MOV    R1, FALSE
+                              MOV    M[HitLeftCorner], R1    
+                              MOV    R1, M[BallColumnIndex]
+                              CMP    R1, 29d
+                              JMP.NZ VerificationEnd        ; Verify if is in the left wall
+                              MOV    R1, M[BallRowIndex]
+                              CMP    R1, 2d                 ; Second row
+                              JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
+                              MOV    R1, TRUE
+                              MOV    M[HitLeftCorner], R1      
+                              JMP    VerificationEnd
                               
       VerificationEnd:        POP   R1
                               RET
@@ -95,27 +111,31 @@
                         CALL  VerifyRightCornerHit
                         JMP   EndMoveBall
 
-      LeDoDiagonalMove: DEC   M[BallColumnIndex]
+      LeDoDiagonalMove: DEC   M[BallColumnIndex]      ; Left Down Diagonal Move
                         INC   M[BallRowIndex]
                         JMP   EndMoveBall
 
-      RiDoDiagonalMove: INC   M[BallColumnIndex]
+      RiDoDiagonalMove: INC   M[BallColumnIndex]      ; Right Down Diagonal Move
                         INC   M[BallRowIndex]
                         JMP   EndMoveBall
 
-      LeUpDiagonalMove: DEC   M[BallColumnIndex]
+      LeUpDiagonalMove: DEC   M[BallColumnIndex]      ; Left Up Diagonal Move
                         DEC   M[BallRowIndex]
                         JMP   EndMoveBall
 
-      RiUpDiagonalMove: INC   M[BallColumnIndex]
+      RiUpDiagonalMove: INC   M[BallColumnIndex]      ; Right Up Diagonal Move
                         DEC   M[BallRowIndex]
                         JMP   EndMoveBall
 
       MoveBall:         PUSH  R1
-                        
                         MOV   R1, M[HitRightCorner]
-                        CMP   R1, 1d
+                        CMP   R1, TRUE
                         JMP.Z LeDoDiagonalMove
+
+                        ;PUSH  R1
+                        ;MOV   R1, M[HitLeftCorner]
+                        ;CMP   R1, TRUE
+                        ;JMP.Z RiDoDiagonalMove
 
                         MOV   R1, M[BallColumnIndex]
                         CMP   R1, START_BALL_COL
@@ -179,12 +199,12 @@
                         CALL  PrintBall
 
                         MOV   R1, M[StopTimer]
-                        CMP   R1, 1d
-                        JMP.Z EndTimerDef
+                        CMP   R1, TRUE
+                        JMP.Z EndTimer
 
-                        CALL  SetTimer
+                        CALL  SetTimer    ; Reset timer
 
-      EndTimerDef:      POP   R3
+      EndTimer:         POP   R3
                         POP   R2
                         POP   R1
                         RTI
@@ -325,7 +345,7 @@
                               MOV   R1, M[LeftFlipperUp]
                               CMP   R1, ON
                               CALL.Z  StartMoveLFD     ; Print Left Flipper to Down
-                              CALL.NZ StartMoveLFU      ; Print Left Flipper to Up
+                              CALL.NZ StartMoveLFU     ; Print Left Flipper to Up
                               POP   R1
                               RTI
 
@@ -517,209 +537,251 @@
                               RET
 
 ;------------------------------------------------------------------------------
-; Função ImprimeCanaleta - Imprime Canaleta Central
+; Function Printing Obstacle
 ;------------------------------------------------------------------------------
-      IniciaSequenciaPontos:  PUSH  R1
-                              PUSH  R2
-                              PUSH  R3
+      PrintObstacle:    PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+                        PUSH  R4
 
-      ImprimeSequenciaPontos: MOV   R3, M[ CharIndex ]
-                              CMP   R3, M[ NumDots ]
-                              JMP.Z FimSequenciaPontos
-                              MOV   R1, M[ ColumnIndex ]
-                              MOV   R2, M[ RowIndex ]
-                              MOV   R3, '.'
-                              SHL   R2, ROW_SHIFT
-                              OR    R1, R2
-                              MOV   M[ CURSOR ], R1
-                              MOV   M[ WRITE ], R3
-                              INC   M[ CharIndex ]
-                              INC   M[ ColumnIndex ]
-                              JMP   ImprimeSequenciaPontos
+                        ; Save original index
+                        MOV   R2, M[RowIndex]
+                        MOV   R4, M[ColumnIndex]
+                        MOV   R5, M[EndColumnIndex]
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
 
-      FimSequenciaPontos:     POP   R3
-                              POP   R2 
-                              POP   R1
-                              RET
+                        ; Increment and restore index
+                        INC   R2
+                        MOV   M[RowIndex], R2
+                        MOV   M[ColumnIndex], R4 
+                        MOV   M[EndColumnIndex], R5 
+                        CALL  StartHorizontalPrint
 
-      ImprimeCanaleta:        PUSH  R1    ; Coluna
-                              PUSH  R2    ; Linha
-                              PUSH  R3    ; Caracter / Auxiliar
+                        ; Repeat the process
+                        INC   R2
+                        MOV   M[RowIndex], R2
+                        MOV   M[ColumnIndex], R4 
+                        MOV   M[EndColumnIndex], R5 
+                        CALL  StartHorizontalPrint
 
-                              MOV   R3, 0d
-                              MOV   M[ CharIndex ], R3
-                              MOV   R3, 27d
-                              MOV   M[ ColumnIndex ], R3
-                              CALL  IniciaSequenciaPontos
-                              
-                              MOV   R1, M[ ColumnIndex ]
-                              MOV   R2, M[ RowIndex ]
-                              MOV   R3, '|'
-                              SHL   R2, ROW_SHIFT
-                              OR    R1, R2
-                              MOV   M[ CURSOR ], R1
-                              MOV   M[ WRITE ], R3
-
-                              MOV   R1, 45d
-                              MOV   M[ ColumnIndex ], R1
-                              MOV   R2, M[ RowIndex ]
-                              SHL   R2, ROW_SHIFT
-                              OR    R1, R2
-                              MOV   M[ CURSOR ], R1
-                              MOV   M[ WRITE ], R3
-
-                              INC   M[ ColumnIndex ]
-                              MOV   R3, 0d
-                              MOV   M[ CharIndex ], R3
-                              CALL  IniciaSequenciaPontos
-
-                              POP   R3
-                              POP   R2
-                              POP   R1
-                              RET
+                        POP   R4
+                        POP   R3
+                        POP   R2
+                        POP   R1
+                        RET
 
 ;------------------------------------------------------------------------------
-; Função ImprimeAsterisco - Imprime Asterisco
+; Function PrintChannel - Print Central Channel
 ;------------------------------------------------------------------------------
-      ImprimeAsterisco:       PUSH  R1
-                              PUSH  R2
-                              PUSH  R3
+      PrintChannel:     PUSH  R1    ; Coluna
+                        PUSH  R3    ; Caracter / Auxiliar
 
-                              MOV   R1, M[ ColumnIndex ]
-                              MOV   R2, M[ RowIndex ]
-                              MOV   R3, '#'
-                              SHL   R2, ROW_SHIFT
-                              OR    R1, R2
-                              MOV   M[ CURSOR ], R1
-                              MOV   M[ WRITE ], R3
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 32d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
 
-                              POP   R3
-                              POP   R2
-                              POP   R1
-                              RET
+                        INC   M[EndColumnIndex] 
+                        MOV   R3, '|'
+                        CALL  StartHorizontalPrint
 
-;------------------------------------------------------------------------------
-; Função ImprimeInclinacaoEsq - Imprime Inclinação do Lado Esquerdo
-;------------------------------------------------------------------------------
-      ImprimeInclinacaoEsq:   PUSH  R1
+                        MOV   R1, 45d
+                        MOV   M[ColumnIndex], R1
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '|'
+                        CALL  StartHorizontalPrint
 
-                              MOV   R1, 27d
-                              MOV   M[ColumnIndex], R1
-                              MOV   R1, 14d
-                              MOV   M[RowIndex], R1
-                              CALL  ImprimeAsterisco
+                        MOV   R1, 51d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
 
-                              INC   M[RowIndex]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              MOV   R1, 1d
-                              MOV   M[NumDots], R1
-                              CALL  IniciaSequenciaPontos
-                              CALL  ImprimeAsterisco
-
-                              INC   M[ RowIndex ]
-                              INC   M[ NumDots ]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              MOV   R1, 27d
-                              MOV   M[ColumnIndex], R1
-                              CALL  IniciaSequenciaPontos
-                              CALL  ImprimeAsterisco
-
-                              INC   M[ RowIndex ]
-                              INC   M[ NumDots ]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              MOV   R1, 27d
-                              MOV   M[ColumnIndex], R1
-                              CALL  IniciaSequenciaPontos
-                              CALL  ImprimeAsterisco
-
-                              INC   M[ RowIndex ]
-                              INC   M[ NumDots ]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              MOV   R1, 27d
-                              MOV   M[ColumnIndex], R1
-                              CALL  IniciaSequenciaPontos
-                              CALL  ImprimeAsterisco
-
-                              INC   M[ RowIndex ]
-                              INC   M[ NumDots ]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              MOV   R1, 27d
-                              MOV   M[ColumnIndex], R1
-                              CALL  IniciaSequenciaPontos
-                              CALL  ImprimeAsterisco
-
-                              POP   R1
-                              RET
+                        POP   R3
+                        POP   R1
+                        RET
 
 ;------------------------------------------------------------------------------
-; Função ImprimeInclinacaoDir - Imprime Inclinação do Lado Direita
+; Function PrintLeftSlope - Print the Left slope
 ;------------------------------------------------------------------------------
-      ImprimeInclinacaoDir:   PUSH  R1
+      PrintLeftSlope:   PUSH  R1
 
-                              MOV   R1, 50d
-                              MOV   M[ColumnIndex], R1
-                              MOV   R1, 14d
-                              MOV   M[RowIndex], R1
-                              CALL  ImprimeAsterisco
+                        MOV   R1, 14d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
 
-                              DEC   M[ColumnIndex]
-                              INC   M[RowIndex]
-                              CALL  ImprimeAsterisco
-                              INC   M[ColumnIndex]
+                        INC   M[RowIndex]
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
 
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              MOV   R1, 1d
-                              MOV   M[NumDots], R1
-                              CALL  IniciaSequenciaPontos
+                        MOV   R1, 28d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
 
-                              MOV   R1, 48d
-                              MOV   M[ColumnIndex], R1
-                              INC   M[RowIndex]
-                              CALL  ImprimeAsterisco
-                              INC   M[ColumnIndex]
-                              INC   M[NumDots]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              CALL  IniciaSequenciaPontos
+                        INC   M[RowIndex]
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 29d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
 
-                              MOV   R1, 47d
-                              MOV   M[ColumnIndex], R1
-                              INC   M[RowIndex]
-                              CALL  ImprimeAsterisco
-                              INC   M[ColumnIndex]
-                              INC   M[NumDots]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              CALL  IniciaSequenciaPontos
+                        MOV   R1, 29d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
 
-                              MOV   R1, 46d
-                              MOV   M[ColumnIndex], R1
-                              INC   M[RowIndex]
-                              CALL  ImprimeAsterisco
-                              INC   M[ColumnIndex]
-                              INC   M[NumDots]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              CALL  IniciaSequenciaPontos
+                        INC   M[RowIndex]
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 30d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
 
-                              MOV   R1, 45d
-                              MOV   M[ColumnIndex], R1
-                              INC   M[RowIndex]
-                              CALL  ImprimeAsterisco
-                              INC   M[ColumnIndex]
-                              INC   M[NumDots]
-                              MOV   R1, 0d
-                              MOV   M[CharIndex], R1
-                              CALL  IniciaSequenciaPontos
+                        MOV   R1, 30d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
 
-                              POP   R1
-                              RET
+                        INC   M[RowIndex]
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 31d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        MOV   R1, 31d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+
+                        INC   M[RowIndex]
+                        MOV   R1, 27d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 32d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        MOV   R1, 32d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Function PrintRightSlope - Print the Right slope
+;------------------------------------------------------------------------------
+      PrintRightSlope:  PUSH  R1
+
+                        MOV   R1, 14d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 50d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+
+                        INC   M[RowIndex]
+                        MOV   R1, 49d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+                        MOV   R1, 50d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        INC   M[RowIndex]
+                        MOV   R1, 48d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+                        MOV   R1, 49d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 51d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        INC   M[RowIndex]
+                        MOV   R1, 47d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+                        MOV   R1, 48d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 51d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        INC   M[RowIndex]
+                        MOV   R1, 46d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+                        MOV   R1, 47d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 51d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        INC   M[RowIndex]
+                        MOV   R1, 45d
+                        MOV   M[ColumnIndex], R1 
+                        INC   R1
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '#'
+                        CALL  StartHorizontalPrint
+                        MOV   R1, 46d
+                        MOV   M[ColumnIndex], R1 
+                        MOV   R1, 51d
+                        MOV   M[EndColumnIndex], R1 
+                        MOV   R3, '.'
+                        CALL  StartHorizontalPrint
+
+                        POP   R1
+                        RET
 
 ;------------------------------------------------------------------------------
 ; Function Score Printing
@@ -925,24 +987,45 @@
                               MOV   R3, '#'
                               CALL  StartHorizontalPrint
                         
-                        ; Print Declives (To Optimize)
-                              CALL  ImprimeInclinacaoEsq    ; Declividade do lado Esquerdo
-                              CALL  ImprimeInclinacaoDir    ; Declividade do lado Direito
+                        ; Print Obstacles
+                              MOV   R1, 4d
+                              MOV   M[RowIndex], R1
+                              MOV   R1, 32d
+                              MOV   M[ColumnIndex], R1 
+                              MOV   R1, 35d
+                              MOV   M[EndColumnIndex], R1 
+                              CALL  PrintObstacle
 
-                        ; Print Channel (To Optimize)
-                              MOV   R1, 5d
-                              MOV   M[NumDots], R1
+                              MOV   R1, 9d
+                              MOV   M[RowIndex], R1
+                              MOV   R1, 43d
+                              MOV   M[ColumnIndex], R1 
+                              MOV   R1, 46d
+                              MOV   M[EndColumnIndex], R1 
+                              CALL  PrintObstacle
+
+                              MOV   R1, 14d
+                              MOV   M[RowIndex], R1
+                              MOV   R1, 36d
+                              MOV   M[ColumnIndex], R1 
+                              MOV   R1, 39d
+                              MOV   M[EndColumnIndex], R1 
+                              CALL  PrintObstacle
+
+                        ; Print Slopes
+                              CALL  PrintLeftSlope     ; Left slope
+                              CALL  PrintRightSlope    ; Right slope
+
+                        ; Print Channel
                               MOV   R1, 20d
-                              MOV   M[RowIndex], R1         ; Row 20
-                              CALL  ImprimeCanaleta
+                              MOV   M[RowIndex], R1
+                              CALL  PrintChannel
 
-                              MOV   R1, 21d
-                              MOV   M[RowIndex], R1         ; Row 21
-                              CALL  ImprimeCanaleta
+                              INC   M[RowIndex]
+                              CALL  PrintChannel
 
-                              MOV   R1, 22d
-                              MOV   M[RowIndex], R1         ; Row 22
-                              CALL  ImprimeCanaleta
+                              INC   M[RowIndex]
+                              CALL  PrintChannel
 
                         ; Print Flippers
                               CALL  StartMoveLFD
@@ -972,9 +1055,7 @@
                   MOV	SP, R1		      ; We need to initialize the stack
                   MOV	R1, CURSOR_INIT	      ; We need to initialize the cursor 
                   MOV	M[ CURSOR ], R1	      ; with value CURSOR_INIT
-
-                  CALL StartScreen              ; Print screen components
-                  CALL  SetTimer                ; Define timer settings
+                  CALL  StartScreen             ; Print screen components
 
       Cycle: 	BR		Cycle	
       Halt:       BR		Halt
