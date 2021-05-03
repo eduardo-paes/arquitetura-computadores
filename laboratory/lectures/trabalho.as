@@ -14,7 +14,6 @@
       END_ROW			EQU		23d
       END_WALL_ROW		EQU		23d
       INI_COLUMN			EQU		0d
-      FALSE                   EQU         0d
       FIM_TEXTO               EQU         '@'
       INI_ROW			EQU		0d
       INITIAL_SP              EQU         FDFFh
@@ -28,7 +27,6 @@
       RF_ROW_START            EQU         19d
       ROW_SHIFT			EQU		8d
       START_BALL_COL          EQU         53d
-      TRUE                    EQU         1d
       WALL_COLUMN_1		EQU		21d
       WALL_COLUMN_2		EQU		55d
       WALL_ROW			EQU		1d
@@ -51,6 +49,18 @@
       StopTimer               WORD        0d
       HitRightCorner          WORD        0d
       HitLeftCorner           WORD        0d
+      PosX                    WORD        0d
+      PosY                    WORD        0d
+      VerifyRow               WORD        OFF   ; Variables to identify if the row is in the position analyzed
+      VerifyColumn            WORD        OFF   ; Variables to identify if the column is in the position analyzed
+      InRUDM                  WORD        OFF   ; In Right Up Diagonal Movement
+      InRDDM                  WORD        OFF   ; In Right Down Diagonal Movement
+      InLUDM                  WORD        OFF   ; In Left Up Diagonal Movement
+      InLDDM                  WORD        OFF   ; In Left Down Diagonal Movement
+      InRSM                   WORD        OFF   ; In Right Movement
+      InDSM                   WORD        OFF   ; In Down Movement
+      InLSM                   WORD        OFF   ; In Left Movement
+      InUSM                   WORD        OFF   ; In Up Movement
 
 ;------------------------------------------------------------------------------
 ; ZONA III: Interruption
@@ -75,11 +85,56 @@
 ;------------------------------------------------------------------------------
       StartGame:        CALL  SetTimer
                         RTI
+
 ;------------------------------------------------------------------------------
-; Function Ball movements
+; Function Row Ball Index Verification
+;------------------------------------------------------------------------------
+      IsInRowY:   PUSH  R1
+                  PUSH  R2
+                  MOV   R1, M[BallRowIndex]
+                  MOV   R2, M[PosY]
+                  CMP   R1, R2
+                  JMP.NZ EndVerificationRow
+                  MOV   R1, ON
+                  MOV   M[VerifyRow], R1
+                  JMP   EndVerificationRow
+
+      EndVerificationRow:     POP   R2
+                              POP   R1
+                              RET
+
+;------------------------------------------------------------------------------
+; Function Column Ball Index Verification
+;------------------------------------------------------------------------------
+      IsInColX:   PUSH  R1
+                  PUSH  R2
+                  MOV   R1, M[BallColumnIndex]
+                  MOV   R2, M[PosX]
+                  CMP   R1, R2
+                  JMP.NZ EndVerificationCol
+                  MOV   R1, ON
+                  MOV   M[VerifyColumn], R1
+
+                  ; Inverting Movements
+                  MOV   R1, M[InRUDM]
+                  MOV   R2, M[InLDDM]
+                  MOV   M[InRUDM], R2
+                  MOV   M[InLDDM], R1
+                  MOV   R1, M[InLUDM]
+                  MOV   R2, M[InRDDM]
+                  MOV   M[InLUDM], R2
+                  MOV   M[InRDDM], R1
+                  JMP   EndVerificationCol
+
+      EndVerificationCol:     POP   R2
+                              POP   R1
+                              RET    
+
+;------------------------------------------------------------------------------
+; Function Verifying Ball Position
 ;------------------------------------------------------------------------------
       VerifyRightCornerHit:   PUSH   R1
-                              MOV    R1, FALSE
+                              MOV    R1, OFF
                               MOV    M[HitRightCorner], R1    
                               MOV    R1, M[BallColumnIndex]
                               CMP    R1, START_BALL_COL
@@ -87,12 +142,12 @@
                               MOV    R1, M[BallRowIndex]
                               CMP    R1, 2d                 ; Second row
                               JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
-                              MOV    R1, TRUE
+                              MOV    R1, ON
                               MOV    M[HitRightCorner], R1
                               JMP    VerificationEnd
 
       VerifyLeftCornerHit:    PUSH   R1
-                              MOV    R1, FALSE
+                              MOV    R1, OFF
                               MOV    M[HitLeftCorner], R1    
                               MOV    R1, M[BallColumnIndex]
                               CMP    R1, 29d
@@ -100,13 +155,78 @@
                               MOV    R1, M[BallRowIndex]
                               CMP    R1, 2d                 ; Second row
                               JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
-                              MOV    R1, TRUE
+                              MOV    R1, ON
                               MOV    M[HitLeftCorner], R1      
-                              JMP    VerificationEnd
-                              
+                              JMP    VerificationEnd                                  
+      
       VerificationEnd:        POP   R1
                               RET
 
+      WhichColumnIsTheBall:   PUSH  R1
+                              PUSH  R2
+                              MOV   R1, OFF
+                              MOV   M[VerifyColumn], R1
+                              MOV   R1, ON
+
+                              MOV   R2, 43d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              CALL.Z EndColumnSearch
+
+                              MOV   R2, 44d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              CALL.Z EndColumnSearch
+
+                              MOV   R2, 45d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              CALL.Z EndColumnSearch
+                              
+      EndColumnSearch:        POP   R2
+                              POP   R1
+                              RET   
+
+      InWhichRowIsTheBall:      PUSH  R1
+                              PUSH  R2
+                              MOV   R1, OFF
+                              MOV   M[VerifyRow], R1
+                              MOV   R1, ON
+
+                              MOV   R2, 9d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z WhichColumnIsTheBall
+                              CMP   M[VerifyColumn], R1
+                              CALL.Z EndRowSearch
+
+                              MOV   R2, 10d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z WhichColumnIsTheBall
+                              CMP   M[VerifyColumn], R1
+                              CALL.Z EndRowSearch
+
+                              MOV   R2, 11d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z WhichColumnIsTheBall
+                              CMP   M[VerifyColumn], R1
+                              CALL.Z EndRowSearch
+                              
+      EndRowSearch:           POP   R2
+                              POP   R1
+                              RET
+
+;------------------------------------------------------------------------------
+; Function Ball movements
+;------------------------------------------------------------------------------
       StartBallMoves:   DEC   M[BallRowIndex]
                         CALL  VerifyRightCornerHit
                         JMP   EndMoveBall
@@ -129,13 +249,26 @@
 
       MoveBall:         PUSH  R1
                         MOV   R1, M[HitRightCorner]
-                        CMP   R1, TRUE
+                        CMP   R1, ON
                         JMP.Z LeDoDiagonalMove
 
-                        ;PUSH  R1
-                        ;MOV   R1, M[HitLeftCorner]
-                        ;CMP   R1, TRUE
-                        ;JMP.Z RiDoDiagonalMove
+                        MOV   R1, M[InRUDM]
+                        CMP   R1, ON
+                        JMP.Z RiUpDiagonalMove
+
+                        MOV   R1, M[InRDDM]
+                        CMP   R1, ON
+                        JMP.Z RiDoDiagonalMove
+
+                        MOV   R1, M[InLUDM]
+                        CMP   R1, ON
+                        JMP.Z LeUpDiagonalMove
+
+                        MOV   R1, M[InLDDM]
+                        CMP   R1, ON
+                        JMP.Z LeDoDiagonalMove
+
+                        CALL  InWhichRowIsTheBall
 
                         MOV   R1, M[BallColumnIndex]
                         CMP   R1, START_BALL_COL
@@ -199,7 +332,7 @@
                         CALL  PrintBall
 
                         MOV   R1, M[StopTimer]
-                        CMP   R1, TRUE
+                        CMP   R1, ON
                         JMP.Z EndTimer
 
                         CALL  SetTimer    ; Reset timer
@@ -495,38 +628,32 @@
                               PUSH  R2
                               PUSH  R3
 
+                              MOV   R3, '|'
+                              MOV   R2, END_WALL_ROW
+                              MOV   M[EndRowIndex], R2 
                               MOV   R2, WALL_ROW
                               MOV   M[RowIndex], R2
                               MOV   M[ColumnIndex], R1
-                              MOV   R2, END_WALL_ROW
-                              MOV   M[EndRowIndex], R2 
-                              MOV   R3, '|'
                               CALL  StartVerticalPrint
 
-                              MOV   R2, WALL_ROW
                               MOV   M[RowIndex], R2
                               INC   M[ColumnIndex]
                               CALL  StartVerticalPrint
 
-                              MOV   R2, WALL_ROW
-                              MOV   M[RowIndex], R2
-                              INC   M[ColumnIndex]
                               MOV   R3, '.'
-                              CALL  StartVerticalPrint
-
-                              MOV   R2, WALL_ROW
                               MOV   M[RowIndex], R2
                               INC   M[ColumnIndex]
-                              MOV   R3, '.'
                               CALL  StartVerticalPrint
 
-                              MOV   R2, WALL_ROW
                               MOV   M[RowIndex], R2
                               INC   M[ColumnIndex]
+                              CALL  StartVerticalPrint
+
                               MOV   R3, '|'
+                              MOV   M[RowIndex], R2
+                              INC   M[ColumnIndex]
                               CALL  StartVerticalPrint
 
-                              MOV   R2, WALL_ROW
                               MOV   M[RowIndex], R2
                               INC   M[ColumnIndex]
                               CALL  StartVerticalPrint
@@ -1041,7 +1168,7 @@
                               MOV   R1, 2d
                               MOV   M[RowIndex], R1         ; Linha 1
                               MOV   R1, 2d
-                              MOV   M[ColumnIndex], R1      ; Linha 1
+                              MOV   M[ColumnIndex], R1      ; Coluna 1
                               CALL  StartLife
                         POP   R3
                         POP   R1

@@ -1,17 +1,17 @@
 Obstáculos:
 ===========
 
-Ob.1:
+Ob.3:
     Rows: 4d-6d
-    Cols: 32d-35d
+    Cols: 32d-34d
 
 Ob.2:
     Rows: 9d-11d
-    Cols: 43d-46d
+    Cols: 43d-45d
 
-Ob.3:
+Ob.1:
     Rows: 14d-16d
-    Cols: 36d-39d
+    Cols: 36d-38d
 
 Paredes:
 ========
@@ -20,7 +20,21 @@ Parede Esquerda:
     Rows: 3d-14d
     Column: 26d
 
-Parede Direita:
-    Rows: 
-    Column: 
-  
+Parede Direita1:
+    Rows: 7d-14d
+    Column: 51d
+
+Parede Direita2:
+    Rows: 3d-6d
+    Column: 55d
+
+Declives:
+=========
+
+Esquerda:
+    Row: 14d
+    Column: 26d-32d
+
+Direita:
+    Row: 14d
+    Column: 45d-51d
