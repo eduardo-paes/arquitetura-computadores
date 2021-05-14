@@ -27,6 +27,7 @@
       RF_ROW_START            EQU         19d
       ROW_SHIFT			EQU		8d
       START_BALL_COL          EQU         53d
+      START_BALL_ROW          EQU         22d
       WALL_COLUMN_1		EQU		21d
       WALL_COLUMN_2		EQU		55d
       WALL_ROW			EQU		1d
@@ -39,16 +40,14 @@
       BallColumnIndex         WORD        53d
       BallRowIndex            WORD        22d
       ColumnIndex             WORD        0d
-      LifeText		      STR         'LIFES:', FIM_TEXTO
+      LifeText		      STR         'LIFES: 3', FIM_TEXTO
       RowIndex                WORD        0d
-      ScoreText		      STR         'SCORE:', FIM_TEXTO
+      ScoreText		      STR         'SCORE: 0', FIM_TEXTO
       EndColumnIndex          WORD        0d
       EndRowIndex             WORD        0d
       LeftFlipperUp           WORD        OFF
       RightFlipperUp          WORD        OFF
-      StopTimer               WORD        0d
-      HitRightCorner          WORD        0d
-      HitLeftCorner           WORD        0d
+      PosVerified             WORD        OFF
       PosX                    WORD        0d
       PosY                    WORD        0d
       VerifyRow               WORD        OFF   ; Variables to identify if the row is in the position analyzed
@@ -114,16 +113,17 @@
                   JMP.NZ EndVerificationCol
                   MOV   R1, ON
                   MOV   M[VerifyColumn], R1
+                  MOV   M[PosVerified], R1
 
                   ; Inverting Movements
-                  MOV   R1, M[InRUDM]
+                  MOV   R1, M[InRDDM]
                   MOV   R2, M[InLDDM]
-                  MOV   M[InRUDM], R2
+                  MOV   M[InRDDM], R2
                   MOV   M[InLDDM], R1
                   MOV   R1, M[InLUDM]
-                  MOV   R2, M[InRDDM]
+                  MOV   R2, M[InRUDM]
                   MOV   M[InLUDM], R2
-                  MOV   M[InRDDM], R1
+                  MOV   M[InRUDM], R1
                   JMP   EndVerificationCol
 
       EndVerificationCol:     POP   R2
@@ -135,7 +135,7 @@
 ;------------------------------------------------------------------------------
       VerifyRightCornerHit:   PUSH   R1
                               MOV    R1, OFF
-                              MOV    M[HitRightCorner], R1    
+                              MOV    M[InLDDM], R1    
                               MOV    R1, M[BallColumnIndex]
                               CMP    R1, START_BALL_COL
                               JMP.NZ VerificationEnd        ; Verify if is in the initial column
@@ -143,84 +143,426 @@
                               CMP    R1, 2d                 ; Second row
                               JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
                               MOV    R1, ON
-                              MOV    M[HitRightCorner], R1
-                              JMP    VerificationEnd
-
-      VerifyLeftCornerHit:    PUSH   R1
-                              MOV    R1, OFF
-                              MOV    M[HitLeftCorner], R1    
-                              MOV    R1, M[BallColumnIndex]
-                              CMP    R1, 29d
-                              JMP.NZ VerificationEnd        ; Verify if is in the left wall
-                              MOV    R1, M[BallRowIndex]
-                              CMP    R1, 2d                 ; Second row
-                              JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
-                              MOV    R1, ON
-                              MOV    M[HitLeftCorner], R1      
-                              JMP    VerificationEnd                                  
+                              MOV    M[InLDDM], R1
       
       VerificationEnd:        POP   R1
                               RET
 
       WhichColumnIsTheBall:   PUSH  R1
+                              PUSH  R2                              
+
+                              MOV   R2, 46d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndColumnSearch
+
+                              MOV   R2, 50d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndColumnSearch
+                              
+      EndColumnSearch:        POP   R2
+                              POP   R1
+                              RET  
+
+      VerifyingColObstacle1:  PUSH  R1
                               PUSH  R2
-                              MOV   R1, OFF
-                              MOV   M[VerifyColumn], R1
+
                               MOV   R1, ON
+
+                              MOV   R2, 36d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb1
+
+                              MOV   R2, 37d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb1
+
+                              MOV   R2, 38d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb1
+
+      EndVerifyingColOb1:     POP   R2
+                              POP   R1
+                              RET
+      
+      VerifyingRowObstacle1:  PUSH  R1
+                              PUSH  R2
+
+                              ; Row Range => [14 - 16]
+                              ; Column Range => [36 - 38]
+
+                              MOV   R1, ON
+
+                              MOV   R2, 14d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle1
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb1
+
+                              MOV   R2, 15d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle1
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb1
+
+                              MOV   R2, 16d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle1
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb1
+
+      EndVerifyingRowOb1:     POP   R2
+                              POP   R1
+                              RET
+
+      VerifyingColObstacle2:  PUSH  R1
+                              PUSH  R2
+
+                              MOV   R1, ON
+
+                              MOV   R2, 42d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb2
 
                               MOV   R2, 43d
                               MOV   M[PosX], R2
                               CALL  IsInColX
                               CMP   M[VerifyColumn], R1
-                              CALL.Z EndColumnSearch
+                              JMP.Z EndVerifyingColOb2
 
                               MOV   R2, 44d
                               MOV   M[PosX], R2
                               CALL  IsInColX
                               CMP   M[VerifyColumn], R1
-                              CALL.Z EndColumnSearch
+                              JMP.Z EndVerifyingColOb2
 
                               MOV   R2, 45d
                               MOV   M[PosX], R2
                               CALL  IsInColX
                               CMP   M[VerifyColumn], R1
-                              CALL.Z EndColumnSearch
+                              JMP.Z EndVerifyingColOb2
                               
-      EndColumnSearch:        POP   R2
-                              POP   R1
-                              RET   
+                              MOV   R2, 46d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb2
 
-      InWhichRowIsTheBall:      PUSH  R1
+      EndVerifyingColOb2:     POP   R2
+                              POP   R1
+                              RET
+      
+      VerifyingRowObstacle2:  PUSH  R1
                               PUSH  R2
-                              MOV   R1, OFF
-                              MOV   M[VerifyRow], R1
+
+                              ; Row Range => [9 - 11]
+                              ; Column Range => [42 - 46]
+
                               MOV   R1, ON
 
                               MOV   R2, 9d
                               MOV   M[PosY], R2
                               CALL  IsInRowY
                               CMP   M[VerifyRow], R1
-                              CALL.Z WhichColumnIsTheBall
+                              CALL.Z VerifyingColObstacle2
                               CMP   M[VerifyColumn], R1
-                              CALL.Z EndRowSearch
+                              JMP.Z EndVerifyingRowOb2
 
                               MOV   R2, 10d
                               MOV   M[PosY], R2
                               CALL  IsInRowY
                               CMP   M[VerifyRow], R1
-                              CALL.Z WhichColumnIsTheBall
+                              CALL.Z VerifyingColObstacle2
                               CMP   M[VerifyColumn], R1
-                              CALL.Z EndRowSearch
+                              JMP.Z EndVerifyingRowOb2
 
                               MOV   R2, 11d
                               MOV   M[PosY], R2
                               CALL  IsInRowY
                               CMP   M[VerifyRow], R1
-                              CALL.Z WhichColumnIsTheBall
+                              CALL.Z VerifyingColObstacle2
                               CMP   M[VerifyColumn], R1
-                              CALL.Z EndRowSearch
+                              JMP.Z EndVerifyingRowOb2
+
+      EndVerifyingRowOb2:     POP   R2
+                              POP   R1
+                              RET
+
+      VerifyingColObstacle3:  PUSH  R1
+                              PUSH  R2
+
+                              MOV   R1, ON
+
+                              MOV   R2, 32d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb3
+
+                              MOV   R2, 33d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb3
+
+                              MOV   R2, 34d
+                              MOV   M[PosX], R2
+                              CALL  IsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb3
+
+      EndVerifyingColOb3:     POP   R2
+                              POP   R1
+                              RET
+
+      VerifyingRowObstacle3:  PUSH  R1
+                              PUSH  R2
+
+                              ; Row Range => [4 - 6]
+                              ; Column Range => [32 - 34]
+
+                              MOV   R1, ON
+
+                              MOV   R2, 4d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle3
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb3
+
+                              MOV   R2, 5d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle3
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb3
+
+                              MOV   R2, 6d
+                              MOV   M[PosY], R2
+                              CALL  IsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle3
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb3
+
+      EndVerifyingRowOb3:     POP   R2
+                              POP   R1
+                              RET
+
+      VerifyingColRightWall1:       PUSH  R1
+                                    PUSH  R2
+
+                                    MOV   R1, ON
+                                    MOV   R2, 50d
+                                    MOV   M[PosX], R2
+                                    CALL  IsInColX
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingColRightWall1
+
+      EndVerifyingColRightWall1:    POP   R2
+                                    POP   R1
+                                    RET
+
+      VerifyingRowRightWall1:       PUSH  R1
+                                    PUSH  R2
+
+                                    ; Row Range => [7 - 14]
+                                    ; Column Range => [50]
+
+                                    MOV   R1, ON
+
+                                    MOV   R2, 7d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+                                    MOV   R2, 8d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+                                    MOV   R2, 9d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+                                    MOV   R2, 10d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+                                    MOV   R2, 11d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+                                    MOV   R2, 12d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+                                    MOV   R2, 13d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+                                    
+                                    MOV   R2, 14d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall1
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall1
+
+      EndVerifyingRowRightWall1:    POP   R2
+                                    POP   R1
+                                    RET
+
+      VerifyingColRightWall2:       PUSH  R1
+                                    PUSH  R2
+
+                                    MOV   R1, ON
+                                    MOV   R2, 54d
+                                    MOV   M[PosX], R2
+                                    CALL  IsInColX
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingColRightWall2
+
+      EndVerifyingColRightWall2:    POP   R2
+                                    POP   R1
+                                    RET
+
+      VerifyingRowRightWall2:       PUSH  R1
+                                    PUSH  R2
+
+                                    ; Row Range => [3 - 6]
+                                    ; Column Range => [54]
+
+                                    MOV   R1, ON
+
+                                    MOV   R2, 3d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall2
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall2
+
+                                    MOV   R2, 4d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall2
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall2
+
+                                    MOV   R2, 5d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall2
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall2
+
+                                    MOV   R2, 6d
+                                    MOV   M[PosY], R2
+                                    CALL  IsInRowY
+                                    CMP   M[VerifyRow], R1
+                                    CALL.Z VerifyingColRightWall2
+                                    CMP   M[VerifyColumn], R1
+                                    JMP.Z EndVerifyingRowRightWall2
+
+      EndVerifyingRowRightWall2:    POP   R2
+                                    POP   R1
+                                    RET
+
+      InWhichRowIsTheBall:    PUSH  R1
+                              PUSH  R2
+                              
+                              CALL  ResetFlags
+                              
+                              ;--->> Obstacle1 <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyingRowObstacle1
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch   
+                              
+                              ;--->> Obstacle2 <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyingRowObstacle2
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch   
+
+                              ;--->> Obstacle3 <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyingRowObstacle3
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch                              
+
+                              ;--->> Right Wall <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyingRowRightWall1
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch   
+
+                              CALL  ResetFlags
+                              CALL  VerifyingRowRightWall2
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch
                               
       EndRowSearch:           POP   R2
+                              POP   R1
+                              RET
+
+      ResetFlags:             PUSH  R1
+                              MOV   R1, OFF
+                              MOV   M[VerifyRow], R1
+                              MOV   M[VerifyColumn], R1
+                              MOV   M[PosVerified], R1
                               POP   R1
                               RET
 
@@ -231,26 +573,56 @@
                         CALL  VerifyRightCornerHit
                         JMP   EndMoveBall
 
-      LeDoDiagonalMove: DEC   M[BallColumnIndex]      ; Left Down Diagonal Move
+      LeDoDiagonalMove: DEC   M[BallColumnIndex]      ; Left Down Diagonal Movement
                         INC   M[BallRowIndex]
                         JMP   EndMoveBall
 
-      RiDoDiagonalMove: INC   M[BallColumnIndex]      ; Right Down Diagonal Move
+      RiDoDiagonalMove: INC   M[BallColumnIndex]      ; Right Down Diagonal Movement
                         INC   M[BallRowIndex]
                         JMP   EndMoveBall
 
-      LeUpDiagonalMove: DEC   M[BallColumnIndex]      ; Left Up Diagonal Move
+      LeUpDiagonalMove: DEC   M[BallColumnIndex]      ; Left Up Diagonal Movement
                         DEC   M[BallRowIndex]
                         JMP   EndMoveBall
 
-      RiUpDiagonalMove: INC   M[BallColumnIndex]      ; Right Up Diagonal Move
+      RiUpDiagonalMove: INC   M[BallColumnIndex]      ; Right Up Diagonal Movement
                         DEC   M[BallRowIndex]
                         JMP   EndMoveBall
 
+      ResetBall:        PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+
+                        MOV   R1, M[BallRowIndex]
+                        MOV   R2, M[BallColumnIndex]
+                        MOV   R3, '='
+                        SHL   R1, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[CURSOR], R1
+                        MOV   M[WRITE], R3
+
+                        MOV   R1, OFF
+                        MOV   M[ATIV_TEMP], R1
+                        MOV   M[CONFIG_TEMP], R1
+                        MOV   M[InRUDM], R1
+                        MOV   M[InRDDM], R1
+                        MOV   M[InLUDM], R1
+                        MOV   M[InLDDM], R1
+                        MOV   M[BallRowIndex], R1
+                        MOV   M[BallColumnIndex], R1
+
+                        POP   R3
+                        POP   R2
+                        POP   R1
+                        JMP   EndMoveBall
+      
       MoveBall:         PUSH  R1
-                        MOV   R1, M[HitRightCorner]
-                        CMP   R1, ON
-                        JMP.Z LeDoDiagonalMove
+
+                        MOV   R1, M[BallRowIndex]
+                        CMP   R1, END_ROW
+                        JMP.Z ResetBall
+                        
+                        CALL  InWhichRowIsTheBall
 
                         MOV   R1, M[InRUDM]
                         CMP   R1, ON
@@ -268,8 +640,6 @@
                         CMP   R1, ON
                         JMP.Z LeDoDiagonalMove
 
-                        CALL  InWhichRowIsTheBall
-
                         MOV   R1, M[BallColumnIndex]
                         CMP   R1, START_BALL_COL
                         JMP.Z StartBallMoves
@@ -280,9 +650,9 @@
 ; Function Timer - Define ball timer and basic functions
 ;------------------------------------------------------------------------------
       SetTimer:         PUSH  R1
-                        MOV   R1, 1d                  ; Set Timer time
+                        MOV   R1, ON                  ; Set Timer time
                         MOV   M[CONFIG_TEMP], R1
-                        MOV   R1, 1d                  ; Set Timer status
+                        MOV   R1, ON                  ; Set Timer status
                         MOV   M[ATIV_TEMP], R1
                         POP   R1
                         RET
@@ -321,21 +691,24 @@
                         POP   R1
                         RET
 
-
-
       Timer:            PUSH  R1
                         PUSH  R2
-                        PUSH  R3
+                        PUSH  R3                                                      
 
                         CALL  ClearBall
                         CALL  MoveBall
                         CALL  PrintBall
 
-                        MOV   R1, M[StopTimer]
-                        CMP   R1, ON
-                        JMP.Z EndTimer
+                        CALL  SetTimer                ; Reset timer
 
-                        CALL  SetTimer    ; Reset timer
+                        MOV   R1, M[BallColumnIndex]
+                        CMP   R1, OFF
+                        JMP.NZ EndTimer
+
+                        MOV   R1, 53d
+                        MOV   M[BallRowIndex], R1
+                        MOV   R1, 22d
+                        MOV   M[BallColumnIndex], R1
 
       EndTimer:         POP   R3
                         POP   R2
