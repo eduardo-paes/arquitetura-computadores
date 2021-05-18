@@ -45,7 +45,12 @@
       ScoreText		      STR         'SCORE: 0', FIM_TEXTO
       EndColumnIndex          WORD        0d
       EndRowIndex             WORD        0d
+      LeftSlopeHit            WORD        OFF
+      LeftFlipperHit          WORD        OFF
       LeftFlipperUp           WORD        OFF
+      MiddlePos               WORD        OFF
+      RightSlopeHit           WORD        OFF
+      RightFlipperHit         WORD        OFF
       RightFlipperUp          WORD        OFF
       PosVerified             WORD        OFF
       PosX                    WORD        0d
@@ -105,88 +110,484 @@
 ;------------------------------------------------------------------------------
 ; Function Column Ball Index Verification
 ;------------------------------------------------------------------------------
-      IsInColX:   PUSH  R1
-                  PUSH  R2
-                  MOV   R1, M[BallColumnIndex]
-                  MOV   R2, M[PosX]
-                  CMP   R1, R2
-                  JMP.NZ EndVerificationCol
-                  MOV   R1, ON
-                  MOV   M[VerifyColumn], R1
-                  MOV   M[PosVerified], R1
+      IsInColX:               PUSH   R1
+                              PUSH   R2
+                              MOV    R1, M[BallColumnIndex]
+                              MOV    R2, M[PosX]
+                              CMP    R1, R2
+                              JMP.NZ EndVerificationCol
+                              MOV    R1, ON
+                              MOV    M[VerifyColumn], R1
+                              MOV    M[PosVerified], R1
 
-                  ; Inverting Movements
-                  MOV   R1, M[InRDDM]
-                  MOV   R2, M[InLDDM]
-                  MOV   M[InRDDM], R2
-                  MOV   M[InLDDM], R1
-                  MOV   R1, M[InLUDM]
-                  MOV   R2, M[InRUDM]
-                  MOV   M[InLUDM], R2
-                  MOV   M[InRUDM], R1
-                  JMP   EndVerificationCol
+                              ; Inverting Movements
+                              MOV    R1, M[InRDDM]
+                              MOV    R2, M[InLDDM]
+                              MOV    M[InRDDM], R2
+                              MOV    M[InLDDM], R1
+                              MOV    R1, M[InLUDM]
+                              MOV    R2, M[InRUDM]
+                              MOV    M[InLUDM], R2
+                              MOV    M[InRUDM], R1
+                              JMP    EndVerificationCol
 
       EndVerificationCol:     POP   R2
                               POP   R1
-                              RET    
+                              RET  
 
 ;------------------------------------------------------------------------------
-; Function Verifying Ball Position
+; Function Invertion/Reflection
 ;------------------------------------------------------------------------------
-      VerifyRightCornerHit:   PUSH   R1
-                              MOV    R1, OFF
-                              MOV    M[InLDDM], R1    
-                              MOV    R1, M[BallColumnIndex]
-                              CMP    R1, START_BALL_COL
-                              JMP.NZ VerificationEnd        ; Verify if is in the initial column
-                              MOV    R1, M[BallRowIndex]
-                              CMP    R1, 2d                 ; Second row
-                              JMP.NZ VerificationEnd        ; Verify if hit the upper right corner
-                              MOV    R1, ON
+      InvertDirection:        PUSH   R1
+                              PUSH   R1
+                              MOV    R1, M[InRDDM]
+                              MOV    R2, M[InLDDM]
+                              MOV    M[InRDDM], R2
                               MOV    M[InLDDM], R1
-      
-      VerificationEnd:        POP   R1
+                              MOV    R1, M[InLUDM]
+                              MOV    R2, M[InRUDM]
+                              MOV    M[InLUDM], R2
+                              MOV    M[InRUDM], R1
+                              POP    R2
+                              POP    R1
                               RET
 
-      WhichColumnIsTheBall:   PUSH  R1
-                              PUSH  R2                              
+      ReflectDirection:       PUSH   R1
+                              PUSH   R1
+                              MOV    R1, M[InLDDM]
+                              MOV    R2, M[InLUDM]
+                              MOV    M[InLDDM], R2
+                              MOV    M[InLUDM], R1
 
-                              MOV   R2, 46d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndColumnSearch
+                              MOV    R1, M[InRDDM]
+                              MOV    R2, M[InRUDM]
+                              MOV    M[InRDDM], R2
+                              MOV    M[InRUDM], R1
+                              POP    R2
+                              POP    R1
+                              RET
 
-                              MOV   R2, 50d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndColumnSearch
+;------------------------------------------------------------------------------
+; Function Verify if Hit Upper Wall
+;------------------------------------------------------------------------------
+      VerifyUpperWallHit:     PUSH   R1
+                              PUSH   R2      
+                              MOV    R1, M[BallRowIndex]
+                              MOV    R2, 1d
+                              CMP    R1, R2                              
+                              JMP.NZ EndVerifyUpperWallHit
+                              MOV    R1, M[InRDDM]                        
+                              MOV    R2, M[InRUDM]
+                              MOV    M[InRDDM], R2
+                              MOV    M[InRUDM], R1
+                              MOV    R1, M[InLDDM]
+                              MOV    R2, M[InLUDM]
+                              MOV    M[InLDDM], R2
+                              MOV    M[InLUDM], R1
+                              MOV    R1, ON
+                              MOV    M[PosVerified], R1
+
+      EndVerifyUpperWallHit:  POP   R2
+                              POP   R1                              
+                              RET
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Right Corner
+;------------------------------------------------------------------------------
+      VerifyRCHit1:     PUSH   R1
+                        MOV    R1, M[BallColumnIndex]
+                        CMP    R1, 52d
+                        JMP.NZ  VerifyRCEnd
+                        MOV    R1, M[BallRowIndex]
+                        CMP    R1, 1d
+                        JMP.Z HitRC
+                        JMP VerifyRCEnd
+
+      VerifyRCHit2:     PUSH   R1
+                        MOV    R1, M[BallColumnIndex]
+                        CMP    R1, 53d
+                        JMP.NZ  VerifyRCEnd
+                        MOV    R1, M[BallRowIndex]
+                        CMP    R1, 2d
+                        JMP.Z HitRC
+                        JMP VerifyRCEnd
+
+      VerifyRCHit3:     PUSH   R1
+                        MOV    R1, M[BallColumnIndex]
+                        CMP    R1, 54d
+                        JMP.NZ  VerifyRCEnd
+                        MOV    R1, M[BallRowIndex]
+                        CMP    R1, 3d
+                        JMP.Z HitRC
+                        JMP VerifyRCEnd
+
+      HitRC:            MOV    R1, ON
+                        MOV    M[InLDDM], R1
+                        MOV    M[PosVerified], R1
+                        MOV    R1, OFF
+                        MOV    M[InLUDM], R1
+                        MOV    M[InRUDM], R1
+                        MOV    M[InRDDM], R1
+      
+      VerifyRCEnd:      POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Left Corner
+;------------------------------------------------------------------------------
+      VerifyLeCoColHit:       PUSH   R1
+                              MOV    R1, M[BallRowIndex]
+                              CMP    R1, M[PosY]
+                              JMP.NZ EndVerifyLeCoColHit
+                              MOV    R1, ON
+                              MOV    M[InRDDM], R1
+                              MOV    M[PosVerified], R1
+                              MOV    R1, OFF
+                              MOV    M[InLUDM], R1
+                              MOV    M[InRUDM], R1
+                              MOV    M[InLDDM], R1
+                              JMP    EndVerifyLeCoColHit
+
+      EndVerifyLeCoColHit:    POP    R1
+                              RET
+
+      VerifyLeftCornerHit:    PUSH   R1
+                              PUSH   R2
+
+                              MOV    R1, 29d
+                              MOV    M[PosX], R1
+                              MOV    R1, 1d
+                              MOV    M[PosY], R1
+                              MOV    R2, ON
+
+                              MOV    R1, M[BallColumnIndex]
+                              CMP    R1, M[PosX]
+                              CALL.Z VerifyLeCoColHit
+                              CMP    R2, M[PosVerified]
+                              JMP.Z  EndVerLeCorHit
+
+                              INC    M[PosY]
+                              CMP    R1, M[PosX]
+                              CALL.Z VerifyLeCoColHit
+                              CMP    R2, M[PosVerified]
+                              JMP.Z  EndVerLeCorHit
+
+                              DEC    M[PosX]
+                              CMP    R1, M[PosX]
+                              CALL.Z VerifyLeCoColHit
+                              CMP    R2, M[PosVerified]
+                              JMP.Z  EndVerLeCorHit
+
+                              INC    M[PosY]
+                              CMP    R1, M[PosX]
+                              CALL.Z  VerifyLeCoColHit
+                              CMP    R2, M[PosVerified]
+                              JMP.Z  EndVerLeCorHit
                               
-      EndColumnSearch:        POP   R2
+                              DEC    M[PosX]
+                              CMP    R1, M[PosX]
+                              CALL.Z VerifyLeCoColHit
+                              CMP    R2, M[PosVerified]
+                              JMP.Z  EndVerLeCorHit
+
+                              JMP    EndVerLeCorHit
+      
+      EndVerLeCorHit:         POP   R2
                               POP   R1
+                              RET
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Right Flipper
+;------------------------------------------------------------------------------
+      VeRiFlipper:      PUSH   R1
+                        PUSH   R2
+                        MOV    R1, M[BallColumnIndex]
+                        MOV    R2, M[PosX]
+                        CMP    R1, R2
+                        JMP.NZ EndVeRiFlipper
+                        MOV    R1, M[BallRowIndex]
+                        MOV    R2, M[PosY]
+                        CMP    R1, R2
+                        JMP.NZ EndVeRiFlipper
+                        MOV    R1, ON
+                        MOV    M[RightFlipperHit], R1
+
+      EndVeRiFlipper:   POP    R2
+                        POP    R1
+                        RET      
+
+      VerifyRFHit:      PUSH   R1
+                        PUSH   R2
+
+                        MOV    R1, M[RightFlipperUp]
+                        CMP    R1, ON
+                        JMP.Z  VerifyRFUp
+                        JMP.NZ VerifyRFDown
+
+      VerifyRFUp:       MOV    R1, 42d
+                        MOV    M[PosX], R1
+                        MOV    R1, 16d
+                        MOV    M[PosY], R1
+                        CALL   VeRiFlipper
+                        MOV    R1, ON
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        INC    M[PosY]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        INC    M[PosY]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+                        JMP    VerifyRFEnd     
+
+      VerifyRFDown:     MOV    R1, 41d
+                        MOV    M[PosX], R1
+                        MOV    R1, 21d
+                        MOV    M[PosY], R1
+                        CALL   VeRiFlipper
+                        MOV    R1, ON
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        DEC    M[PosY]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        DEC    M[PosY]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        DEC    M[PosY]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+                        JMP    VerifyRFEnd
+
+      HitRF:            MOV    R1, M[InRDDM]                        
+                        MOV    R2, M[InRUDM]
+                        MOV    M[InRDDM], R2
+                        MOV    M[InRUDM], R1
+                        MOV    R1, M[InLDDM]
+                        MOV    R2, M[InLUDM]
+                        MOV    M[InLDDM], R2
+                        MOV    M[InLUDM], R1
+                        MOV    R1, ON
+                        MOV    M[PosVerified], R1
+                        MOV    R1, OFF
+                        MOV    M[RightFlipperHit], R1
+      
+      VerifyRFEnd:      POP   R2
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Left Flipper
+;------------------------------------------------------------------------------
+      VeLeFlipper:      PUSH   R1
+                        PUSH   R2
+                        MOV    R1, M[BallColumnIndex]
+                        MOV    R2, M[PosX]
+                        CMP    R1, R2
+                        JMP.NZ EndVeLeFlipper
+                        MOV    R1, M[BallRowIndex]
+                        MOV    R2, M[PosY]
+                        CMP    R1, R2
+                        JMP.NZ EndVeLeFlipper
+                        MOV    R1, ON
+                        MOV    M[LeftFlipperHit], R1
+
+      EndVeLeFlipper:   POP    R2
+                        POP    R1
+                        RET      
+
+      VerifyLFHit:      PUSH   R1
+                        PUSH   R2
+
+                        MOV    R1, M[LeftFlipperUp]
+                        CMP    R1, ON
+                        JMP.Z  VerifyLFUp
+                        JMP.NZ VerifyLFDown
+
+      VerifyLFUp:       MOV    R1, 35d
+                        MOV    M[PosX], R1
+                        MOV    R1, 16d
+                        MOV    M[PosY], R1
+                        CALL   VeLeFlipper
+                        MOV    R1, ON
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        INC    M[PosY]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        INC    M[PosY]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+                        JMP    VerifyLFEnd     
+
+      VerifyLFDown:     MOV    R1, 36d
+                        MOV    M[PosX], R1
+                        MOV    R1, 21d
+                        MOV    M[PosY], R1
+                        CALL   VeLeFlipper
+                        MOV    R1, ON
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        DEC    M[PosY]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        DEC    M[PosY]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        DEC    M[PosY]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+
+                        DEC    M[PosX]
+                        CALL   VeLeFlipper
+                        MOV    R2, M[LeftFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitLF
+                        JMP    VerifyLFEnd
+
+      HitLF:            MOV    R1, M[InRDDM]                        
+                        MOV    R2, M[InRUDM]
+                        MOV    M[InRDDM], R2
+                        MOV    M[InRUDM], R1
+                        MOV    R1, M[InLDDM]
+                        MOV    R2, M[InLUDM]
+                        MOV    M[InLDDM], R2
+                        MOV    M[InLUDM], R1
+                        MOV    R1, ON
+                        MOV    M[PosVerified], R1
+                        MOV    R1, OFF
+                        MOV    M[LeftFlipperHit], R1
+      
+      VerifyLFEnd:      POP   R2
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Any Obstacle
+;------------------------------------------------------------------------------  
+      ObsIsInColX:            PUSH    R1
+                              PUSH    R2
+                              MOV     R1, M[BallColumnIndex]
+                              MOV     R2, M[PosX]
+                              CMP     R1, R2
+                              JMP.NZ  EndObsVerification
+                              MOV     R1, ON
+                              MOV     M[VerifyColumn], R1
+                              MOV     M[PosVerified], R1
+                              MOV     R2, M[MiddlePos]
+                              CMP     R2, R1
+                              CALL.Z  ReflectDirection
+                              CALL.NZ InvertDirection
+                              JMP     EndObsVerification
+
+      ObsIsInRowY:            PUSH   R1
+                              PUSH   R2
+                              MOV    R1, M[BallRowIndex]
+                              MOV    R2, M[PosY]
+                              CMP    R1, R2
+                              JMP.NZ EndObsVerification
+                              MOV    R1, ON
+                              MOV    M[VerifyRow], R1
+                              JMP    EndObsVerification
+
+      EndObsVerification:     POP    R2
+                              POP    R1
                               RET  
 
       VerifyingColObstacle1:  PUSH  R1
                               PUSH  R2
 
+                              MOV   R2, OFF
+
+                              MOV   R1, 35d
+                              MOV   M[PosX], R1
                               MOV   R1, ON
-
-                              MOV   R2, 36d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb1
 
-                              MOV   R2, 37d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              MOV   M[MiddlePos], R1        ; Ball is in middle the of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb1
 
-                              MOV   R2, 38d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              CALL  ObsIsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb1
+
+                              INC   M[PosX]
+                              CALL  ObsIsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb1
+
+                              INC   M[PosX]
+                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb1
 
@@ -195,73 +596,82 @@
                               RET
       
       VerifyingRowObstacle1:  PUSH  R1
-                              PUSH  R2
 
                               ; Row Range => [14 - 16]
                               ; Column Range => [36 - 38]
 
+                              MOV   R1, 13d
+                              MOV   M[PosY], R1
                               MOV   R1, ON
-
-                              MOV   R2, 14d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
+                              CALL  ObsIsInRowY
                               CMP   M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingRowOb1
 
-                              MOV   R2, 15d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
+                              INC   M[PosY]
+                              CALL  ObsIsInRowY
                               CMP   M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingRowOb1
 
-                              MOV   R2, 16d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
+                              INC   M[PosY]
+                              CALL  ObsIsInRowY
                               CMP   M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingRowOb1
 
-      EndVerifyingRowOb1:     POP   R2
-                              POP   R1
+                              INC   M[PosY]
+                              CALL  ObsIsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle1
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb1
+
+                              INC   M[PosY]
+                              CALL  ObsIsInRowY
+                              CMP   M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle1
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingRowOb1
+
+      EndVerifyingRowOb1:     POP   R1
                               RET
 
       VerifyingColObstacle2:  PUSH  R1
                               PUSH  R2
 
+                              MOV   R2, OFF
+
+                              MOV   R1, 42d
+                              MOV   M[PosX], R1
                               MOV   R1, ON
-
-                              MOV   R2, 42d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb2
 
-                              MOV   R2, 43d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              MOV   M[MiddlePos], R1        ; Ball is in middle the of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb2
 
-                              MOV   R2, 44d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb2
 
-                              MOV   R2, 45d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb2
-                              
-                              MOV   R2, 46d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+
+                              INC   M[PosX]
+                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb2
 
@@ -270,61 +680,75 @@
                               RET
       
       VerifyingRowObstacle2:  PUSH  R1
-                              PUSH  R2
 
                               ; Row Range => [9 - 11]
                               ; Column Range => [42 - 46]
 
+                              MOV   R1, 8d
+                              MOV   M[PosY], R1
                               MOV   R1, ON
-
-                              MOV   R2, 9d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
+                              CALL  ObsIsInRowY
                               CMP   M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle2
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingRowOb2
 
-                              MOV   R2, 10d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle2
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb2
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb2
 
-                              MOV   R2, 11d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle2
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb2
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb2
 
-      EndVerifyingRowOb2:     POP   R2
-                              POP   R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle2
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb2
+
+      EndVerifyingRowOb2:     POP   R1
                               RET
 
       VerifyingColObstacle3:  PUSH  R1
                               PUSH  R2
 
+                              MOV   R2, OFF
+
+                              MOV   R1, 31d
+                              MOV   M[PosX], R1
                               MOV   R1, ON
-
-                              MOV   R2, 32d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb3
 
-                              MOV   R2, 33d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              MOV   M[MiddlePos], R1        ; Ball is in middle the of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb3
 
-                              MOV   R2, 34d
-                              MOV   M[PosX], R2
-                              CALL  IsInColX
+                              INC   M[PosX]
+                              CALL  ObsIsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb3
+
+                              INC   M[PosX]
+                              CALL  ObsIsInColX
+                              CMP   M[VerifyColumn], R1
+                              JMP.Z EndVerifyingColOb3
+
+                              INC   M[PosX]
+                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL  ObsIsInColX
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingColOb3
 
@@ -333,41 +757,280 @@
                               RET
 
       VerifyingRowObstacle3:  PUSH  R1
-                              PUSH  R2
 
                               ; Row Range => [4 - 6]
                               ; Column Range => [32 - 34]
 
+                              MOV   R1, 3d
+                              MOV   M[PosY], R1
                               MOV   R1, ON
-
-                              MOV   R2, 4d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
+                              CALL  ObsIsInRowY
                               CMP   M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle3
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingRowOb3
 
-                              MOV   R2, 5d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
+                              INC   M[PosY]
+                              CALL  ObsIsInRowY
                               CMP   M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle3
                               CMP   M[VerifyColumn], R1
                               JMP.Z EndVerifyingRowOb3
 
-                              MOV   R2, 6d
-                              MOV   M[PosY], R2
-                              CALL  IsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle3
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb3
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb3
+                              
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle3
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb3
+                              
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
+                              CALL.Z VerifyingColObstacle3
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb3
 
-      EndVerifyingRowOb3:     POP   R2
-                              POP   R1
+      EndVerifyingRowOb3:     POP   R1
                               RET
 
+;------------------------------------------------------------------------------
+; Function Verify if Hit Right Slope
+;------------------------------------------------------------------------------
+      RightDecVer:            PUSH   R1
+                              PUSH   R2
+                              MOV    R1, M[BallColumnIndex]
+                              MOV    R2, M[PosX]
+                              CMP    R1, R2
+                              JMP.NZ EndRightDecVer
+                              MOV    R1, M[BallRowIndex]
+                              MOV    R2, M[PosY]
+                              CMP    R1, R2
+                              JMP.NZ EndRightDecVer
+                              MOV    R1, ON
+                              MOV    M[RightSlopeHit], R1
+
+      EndRightDecVer:         POP    R2
+                              POP    R1
+                              RET 
+
+      VerifyRightSlope:       PUSH   R1
+                              PUSH   R2
+
+                              MOV    R1, M[InLDDM]
+                              MOV    R2, ON
+                              CMP    R1, R2
+                              JMP.Z  EndVerifyRightSlope
+                              MOV    R1, M[InRUDM]
+                              CMP    R1, R2
+                              JMP.Z  EndVerifyRightSlope
+
+                              MOV    R1, 49d
+                              MOV    M[PosX], R1
+                              MOV    R1, 14d
+                              MOV    M[PosY], R1
+                              CALL   RightDecVer
+                              MOV    R1, ON
+                              MOV    R2, M[RightSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitRightSlope
+
+                              DEC    M[PosX]
+                              INC    M[PosY]
+                              CALL   RightDecVer
+                              MOV    R2, M[RightSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitRightSlope 
+
+                              DEC    M[PosX]
+                              INC    M[PosY]
+                              CALL   RightDecVer
+                              MOV    R2, M[RightSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitRightSlope 
+
+                              DEC    M[PosX]
+                              INC    M[PosY]
+                              CALL   RightDecVer
+                              MOV    R2, M[RightSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitRightSlope 
+
+                              DEC    M[PosX]
+                              INC    M[PosY]
+                              CALL   RightDecVer
+                              MOV    R2, M[RightSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitRightSlope 
+                              JMP    EndVerifyRightSlope
+
+      HitRightSlope:          MOV    R1, M[InRDDM]
+                              MOV    R2, M[InLDDM]
+                              MOV    M[InRDDM], R2
+                              MOV    M[InLDDM], R1
+                              MOV    R1, M[InLUDM]
+                              MOV    R2, M[InRUDM]
+                              MOV    M[InLUDM], R2
+                              MOV    M[InRUDM], R1
+
+                              MOV    R1, ON
+                              MOV    M[PosVerified], R1
+                              MOV    R1, OFF
+                              MOV    M[RightSlopeHit], R1   
+
+      EndVerifyRightSlope:    POP   R2
+                              POP   R1
+                              RET     
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Left Slope
+;------------------------------------------------------------------------------
+      LeftDecVer:             PUSH   R1
+                              PUSH   R2
+                              MOV    R1, M[BallColumnIndex]
+                              MOV    R2, M[PosX]
+                              CMP    R1, R2
+                              JMP.NZ EndLeftDecVer
+                              MOV    R1, M[BallRowIndex]
+                              MOV    R2, M[PosY]
+                              CMP    R1, R2
+                              JMP.NZ EndLeftDecVer
+                              MOV    R1, ON
+                              MOV    M[LeftSlopeHit], R1
+
+      EndLeftDecVer:          POP    R2
+                              POP    R1
+                              RET 
+
+      VerifyLeftSlope:        PUSH   R1
+                              PUSH   R2
+
+                              MOV    R1, M[InRDDM]
+                              MOV    R2, ON
+                              CMP    R1, R2
+                              JMP.Z  EndVerifyLeftSlope
+                              MOV    R1, M[InRUDM]
+                              CMP    R1, R2
+                              JMP.Z  EndVerifyLeftSlope
+
+                              MOV    R1, 27d
+                              MOV    M[PosX], R1
+                              MOV    R1, 13d
+                              MOV    M[PosY], R1
+                              CALL   LeftDecVer
+                              MOV    R1, ON
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope
+                              ;27d-13d
+
+                              INC    M[PosX]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;28d-13d
+
+                              INC    M[PosY]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;28d-14d
+
+                              INC    M[PosX]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;29d-14d
+
+                              INC    M[PosY]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;29d-15d
+
+                              INC    M[PosX]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;30d-15d
+
+                              INC    M[PosY]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;30d-16d
+
+                              INC    M[PosX]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;31d-16d
+
+                              INC    M[PosY]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;31d-17d
+
+                              INC    M[PosX]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;32d-17d
+
+                              INC    M[PosY]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;32d-18d
+
+                              INC    M[PosX]
+                              CALL   LeftDecVer
+                              MOV    R2, M[LeftSlopeHit]
+                              CMP    R1, R2
+                              JMP.Z  HitLeftSlope 
+                              ;33d-18d
+
+                              JMP    EndVerifyLeftSlope
+
+      HitLeftSlope:           MOV    R1, M[InRDDM]
+                              MOV    R2, M[InLDDM]
+                              MOV    M[InRDDM], R2
+                              MOV    M[InLDDM], R1
+                              MOV    R1, M[InLUDM]
+                              MOV    R2, M[InRUDM]
+                              MOV    M[InLUDM], R2
+                              MOV    M[InRUDM], R1
+
+                              MOV    R1, ON
+                              MOV    M[PosVerified], R1
+                              MOV    R1, OFF
+                              MOV    M[LeftSlopeHit], R1   
+
+      EndVerifyLeftSlope:     POP    R2
+                              POP    R1
+                              RET   
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Right Wall
+;------------------------------------------------------------------------------  
       VerifyingColRightWall1:       PUSH  R1
                                     PUSH  R2
 
@@ -516,10 +1179,119 @@
                                     POP   R1
                                     RET
 
-      InWhichRowIsTheBall:    PUSH  R1
-                              PUSH  R2
+      SpecialVerRiWaHit:      PUSH   R1
+                              MOV    R1, M[BallColumnIndex]
+                              CMP    R1, M[PosX]
+                              JMP.NZ EndSpecialVerRiWaHit
+                              MOV    R1, ON
+                              MOV    M[PosVerified], R1
+                              CALL   ReflectDirection
+                              JMP    EndSpecialVerRiWaHit
+
+      EndSpecialVerRiWaHit:   POP    R1
+                              RET
+
+      SpecialVerifying:       PUSH   R1
+                              PUSH   R2
+
+                              MOV    R1, 51d
+                              MOV    M[PosX], R1
+                              MOV    R1, 6d
+                              MOV    M[PosY], R1
+                              MOV    R2, ON
+
+                              MOV    R1, M[BallRowIndex]
+                              CMP    R1, M[PosY]
+                              JMP.NZ EndSpecialVerifying
+
+                              CALL   SpecialVerRiWaHit
+                              INC    M[PosX]
+                              CALL   SpecialVerRiWaHit
+                              INC    M[PosX]
+                              CALL   SpecialVerRiWaHit
+                              INC    M[PosX]
+                              CALL   SpecialVerRiWaHit
+
+                              JMP    EndSpecialVerifying
+      
+      EndSpecialVerifying:    POP   R2
+                              POP   R1
+                              RET      
+
+;------------------------------------------------------------------------------
+; Function Verify if Hit Left Wall
+;------------------------------------------------------------------------------  
+      VerifyLeftWallHit:      PUSH   R1
+                              PUSH   R2      
+                              MOV    R1, M[BallColumnIndex]
+                              MOV    R2, 27d
+                              CMP    R1, R2                              
+                              JMP.NZ EndVerifyLeftWallHit
+                              CALL   InvertDirection
+                              MOV    R1, ON
+                              MOV    M[PosVerified], R1
+
+      EndVerifyLeftWallHit:   POP   R2
+                              POP   R1                              
+                              RET
+
+;------------------------------------------------------------------------------
+; Function Verifying Ball Position
+;------------------------------------------------------------------------------
+      WhereIsTheBall:         PUSH  R1
+                              MOV   R1, ON
+
+                              ;--->> Right Flipper <<---;
                               
                               CALL  ResetFlags
+                              CALL  VerifyRFHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch  
+
+                              ;--->> Left Flipper <<---;
+                              
+                              CALL  ResetFlags
+                              CALL  VerifyLFHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch  
+
+                              ;--->> Right Corner <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyRCHit1
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch  
+
+                              CALL  ResetFlags
+                              CALL  VerifyRCHit2
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch  
+
+                              CALL  ResetFlags
+                              CALL  VerifyRCHit3
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch 
+
+                              ;--->> Left Corner <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyLeftCornerHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch 
+
+                              ;--->> Right Slope <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyRightSlope
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch   
+                              
+                              ;--->> Left Slope <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyLeftSlope
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch 
                               
                               ;--->> Obstacle1 <<---;
 
@@ -553,9 +1325,27 @@
                               CALL  VerifyingRowRightWall2
                               CMP   M[PosVerified], R1
                               JMP.Z EndRowSearch
+
+                              CALL  ResetFlags
+                              CALL  SpecialVerifying
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch
+
+                              ;--->> Left Wall <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyLeftWallHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch
+
+                              ;--->> Upper Wall <<---;
+
+                              CALL  ResetFlags
+                              CALL  VerifyUpperWallHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch
                               
-      EndRowSearch:           POP   R2
-                              POP   R1
+      EndRowSearch:           POP   R1
                               RET
 
       ResetFlags:             PUSH  R1
@@ -570,7 +1360,6 @@
 ; Function Ball movements
 ;------------------------------------------------------------------------------
       StartBallMoves:   DEC   M[BallRowIndex]
-                        CALL  VerifyRightCornerHit
                         JMP   EndMoveBall
 
       LeDoDiagonalMove: DEC   M[BallColumnIndex]      ; Left Down Diagonal Movement
@@ -622,7 +1411,7 @@
                         CMP   R1, END_ROW
                         JMP.Z ResetBall
                         
-                        CALL  InWhichRowIsTheBall
+                        CALL  WhereIsTheBall
 
                         MOV   R1, M[InRUDM]
                         CMP   R1, ON
