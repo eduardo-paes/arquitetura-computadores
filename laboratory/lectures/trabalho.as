@@ -3,6 +3,8 @@
 ;------------------------------------------------------------------------------
       
       ATIV_TEMP               EQU         FFF7h
+      CHARACTER_UM            EQU         49d
+      CHARACTER_ZERO          EQU         48d
       CONFIG_TEMP             EQU         FFF6h
       CURSOR		      EQU         FFFCh
       CURSOR_INIT		      EQU	      FFFFh
@@ -40,23 +42,8 @@
       BallColumnIndex         WORD        53d
       BallRowIndex            WORD        22d
       ColumnIndex             WORD        0d
-      LifeText		      STR         'LIFES: 3', FIM_TEXTO
-      RowIndex                WORD        0d
-      ScoreText		      STR         'SCORE: 0', FIM_TEXTO
       EndColumnIndex          WORD        0d
       EndRowIndex             WORD        0d
-      LeftSlopeHit            WORD        OFF
-      LeftFlipperHit          WORD        OFF
-      LeftFlipperUp           WORD        OFF
-      MiddlePos               WORD        OFF
-      RightSlopeHit           WORD        OFF
-      RightFlipperHit         WORD        OFF
-      RightFlipperUp          WORD        OFF
-      PosVerified             WORD        OFF
-      PosX                    WORD        0d
-      PosY                    WORD        0d
-      VerifyRow               WORD        OFF   ; Variables to identify if the row is in the position analyzed
-      VerifyColumn            WORD        OFF   ; Variables to identify if the column is in the position analyzed
       InRUDM                  WORD        OFF   ; In Right Up Diagonal Movement
       InRDDM                  WORD        OFF   ; In Right Down Diagonal Movement
       InLUDM                  WORD        OFF   ; In Left Up Diagonal Movement
@@ -65,6 +52,26 @@
       InDSM                   WORD        OFF   ; In Down Movement
       InLSM                   WORD        OFF   ; In Left Movement
       InUSM                   WORD        OFF   ; In Up Movement
+      LeftSlopeHit            WORD        OFF
+      LeftFlipperHit          WORD        OFF
+      LeftFlipperUp           WORD        OFF
+      LifeText		      STR         'LIFES: 3', FIM_TEXTO
+      MiddlePos               WORD        OFF
+      NumLifes                WORD        51d
+      NumScore0               WORD        48d
+      NumScore1               WORD        48d
+      NumScore2               WORD        48d
+      RightSlopeHit           WORD        OFF
+      RightFlipperHit         WORD        OFF
+      RightFlipperUp          WORD        OFF
+      RowIndex                WORD        0d
+      Stop                    WORD        OFF
+      ScoreText		      STR         'SCORE: 0', FIM_TEXTO
+      PosVerified             WORD        OFF
+      PosX                    WORD        0d
+      PosY                    WORD        0d
+      VerifyRow               WORD        OFF   ; Variables to identify if the row is in the position analyzed
+      VerifyColumn            WORD        OFF   ; Variables to identify if the column is in the position analyzed
 
 ;------------------------------------------------------------------------------
 ; ZONA III: Interruption
@@ -540,6 +547,70 @@
                               CMP     R2, R1
                               CALL.Z  ReflectDirection
                               CALL.NZ InvertDirection
+
+                              MOV     R1, 1d    ; Row Score
+                              MOV     R2, 9d    ; Column Score
+
+                              MOV     R3, M[NumScore0]
+                              CMP     R3, 57d
+                              JMP.Z   ResetScore0
+                              INC     M[NumScore0]
+                              JMP.NZ  DontResetScore
+
+            ResetScore0:      MOV     R3, CHARACTER_ZERO
+                              MOV     M[NumScore0], R3
+
+                              MOV     R3, M[NumScore1]
+                              CMP     R3, 57d
+                              JMP.Z   ResetScore1
+                              INC     M[NumScore1]
+                              JMP.NZ  DontResetScore
+
+            ResetScore1:      MOV     R3, CHARACTER_ZERO
+                              MOV     M[NumScore1], R3
+
+                              MOV     R3, M[NumScore2]
+                              CMP     R3, 57d
+                              JMP.Z   ResetScore2
+                              INC     M[NumScore2]
+                              JMP.NZ  DontResetScore
+
+            ResetScore2:      MOV     R3, CHARACTER_ZERO
+                              MOV     M[NumScore2], R3
+
+            DontResetScore:   MOV     R3, M[NumScore2]
+                              CMP     R3, CHARACTER_ZERO
+                              JMP.NZ  ThreePlaces
+
+                              MOV     R3, M[NumScore1]
+                              CMP     R3, CHARACTER_ZERO
+                              JMP.NZ  TwoPlaces
+                              JMP.Z   OnePlace
+
+            ThreePlaces:      MOV     R3, M[NumScore2]
+                              SHL     R1, ROW_SHIFT
+                              OR      R1, R2
+                              MOV     M[CURSOR], R1
+                              MOV     M[WRITE], R3
+
+                              MOV     R1, 1d
+                              INC     R2
+
+            TwoPlaces:        MOV     R3, M[NumScore1]
+                              SHL     R1, ROW_SHIFT
+                              OR      R1, R2
+                              MOV     M[CURSOR], R1
+                              MOV     M[WRITE], R3
+
+                              MOV     R1, 1d
+                              INC     R2
+
+            OnePlace:         MOV     R3, M[NumScore0]
+                              SHL     R1, ROW_SHIFT
+                              OR      R1, R2
+                              MOV     M[CURSOR], R1
+                              MOV     M[WRITE], R3
+
                               JMP     EndObsVerification
 
       ObsIsInRowY:            PUSH   R1
@@ -556,86 +627,85 @@
                               POP    R1
                               RET  
 
-      VerifyingColObstacle1:  PUSH  R1
-                              PUSH  R2
+      VerifyingColObstacle1:  PUSH   R1
+                              PUSH   R2
 
-                              MOV   R2, OFF
+                              MOV    R2, OFF
+                              MOV    R1, 34d
+                              MOV    M[PosX], R1
+                              MOV    R1, ON
+                              MOV    M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL   ObsIsInColX
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingColOb1
+ 
+                              INC    M[PosX]
+                              MOV    M[MiddlePos], R1        ; Ball is in middle the of the obstacle
+                              CALL   ObsIsInColX
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingColOb1
+ 
+                              INC    M[PosX]
+                              CALL   ObsIsInColX
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingColOb1
+ 
+                              INC    M[PosX]
+                              CALL   ObsIsInColX
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingColOb1
+ 
+                              INC    M[PosX]
+                              MOV    M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
+                              CALL   ObsIsInColX
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingColOb1
 
-                              MOV   R1, 35d
-                              MOV   M[PosX], R1
-                              MOV   R1, ON
-                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
-                              CALL  ObsIsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingColOb1
-
-                              INC   M[PosX]
-                              MOV   M[MiddlePos], R1        ; Ball is in middle the of the obstacle
-                              CALL  ObsIsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingColOb1
-
-                              INC   M[PosX]
-                              CALL  ObsIsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingColOb1
-
-                              INC   M[PosX]
-                              CALL  ObsIsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingColOb1
-
-                              INC   M[PosX]
-                              MOV   M[MiddlePos], R2        ; Ball is not in the middle of the obstacle
-                              CALL  ObsIsInColX
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingColOb1
-
-      EndVerifyingColOb1:     POP   R2
-                              POP   R1
+      EndVerifyingColOb1:     POP    R2
+                              POP    R1
                               RET
       
-      VerifyingRowObstacle1:  PUSH  R1
+      VerifyingRowObstacle1:  PUSH   R1
 
                               ; Row Range => [14 - 16]
                               ; Column Range => [36 - 38]
 
-                              MOV   R1, 13d
-                              MOV   M[PosY], R1
-                              MOV   R1, ON
-                              CALL  ObsIsInRowY
-                              CMP   M[VerifyRow], R1
+                              MOV    R1, 12d
+                              MOV    M[PosY], R1
+                              MOV    R1, ON
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb1
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb1
 
-                              INC   M[PosY]
-                              CALL  ObsIsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb1
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb1
 
-                              INC   M[PosY]
-                              CALL  ObsIsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb1
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb1
 
-                              INC   M[PosY]
-                              CALL  ObsIsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb1
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb1
 
-                              INC   M[PosY]
-                              CALL  ObsIsInRowY
-                              CMP   M[VerifyRow], R1
+                              INC    M[PosY]
+                              CALL   ObsIsInRowY
+                              CMP    M[VerifyRow], R1
                               CALL.Z VerifyingColObstacle1
-                              CMP   M[VerifyColumn], R1
-                              JMP.Z EndVerifyingRowOb1
+                              CMP    M[VerifyColumn], R1
+                              JMP.Z  EndVerifyingRowOb1
 
       EndVerifyingRowOb1:     POP   R1
                               RET
@@ -684,7 +754,7 @@
                               ; Row Range => [9 - 11]
                               ; Column Range => [42 - 46]
 
-                              MOV   R1, 8d
+                              MOV   R1, 7d
                               MOV   M[PosY], R1
                               MOV   R1, ON
                               CALL  ObsIsInRowY
@@ -1391,26 +1461,41 @@
                         MOV   M[WRITE], R3
 
                         MOV   R1, OFF
-                        MOV   M[ATIV_TEMP], R1
-                        MOV   M[CONFIG_TEMP], R1
                         MOV   M[InRUDM], R1
                         MOV   M[InRDDM], R1
                         MOV   M[InLUDM], R1
                         MOV   M[InLDDM], R1
-                        MOV   M[BallRowIndex], R1
-                        MOV   M[BallColumnIndex], R1
 
-                        POP   R3
+                        DEC   M[NumLifes]
+                        MOV   R1, 2d
+                        MOV   R2, 9d
+                        MOV   R3, M[NumLifes]
+                        SHL   R1, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[CURSOR], R1
+                        MOV   M[WRITE], R3
+
+                        MOV   R1, START_BALL_ROW
+                        MOV   M[BallRowIndex], R1
+                        MOV   R1, START_BALL_COL
+                        MOV   M[BallColumnIndex], R1
+                        
+                        MOV   R1, CHARACTER_ZERO
+                        CMP   M[NumLifes], R1
+                        JMP.NZ EndResetBall
+                        MOV   R1, ON
+                        MOV   M[Stop], R1
+
+      EndResetBall:     POP   R3
                         POP   R2
                         POP   R1
-                        JMP   EndMoveBall
+                        RET
       
       MoveBall:         PUSH  R1
 
                         MOV   R1, M[BallRowIndex]
                         CMP   R1, END_ROW
-                        JMP.Z ResetBall
-                        
+                        CALL.Z ResetBall
                         CALL  WhereIsTheBall
 
                         MOV   R1, M[InRUDM]
@@ -1481,27 +1566,17 @@
                         RET
 
       Timer:            PUSH  R1
-                        PUSH  R2
-                        PUSH  R3                                                      
 
                         CALL  ClearBall
+                        MOV   R1, ON
+                        CMP   M[Stop], R1
+                        JMP.Z EndTimer
+                        
                         CALL  MoveBall
                         CALL  PrintBall
-
                         CALL  SetTimer                ; Reset timer
 
-                        MOV   R1, M[BallColumnIndex]
-                        CMP   R1, OFF
-                        JMP.NZ EndTimer
-
-                        MOV   R1, 53d
-                        MOV   M[BallRowIndex], R1
-                        MOV   R1, 22d
-                        MOV   M[BallColumnIndex], R1
-
-      EndTimer:         POP   R3
-                        POP   R2
-                        POP   R1
+      EndTimer:         POP   R1
                         RTI
 
 ;------------------------------------------------------------------------------
@@ -2285,7 +2360,7 @@
                               MOV   M[EndColumnIndex], R1 
                               CALL  PrintObstacle
 
-                              MOV   R1, 9d
+                              MOV   R1, 8d
                               MOV   M[RowIndex], R1
                               MOV   R1, 43d
                               MOV   M[ColumnIndex], R1 
@@ -2293,11 +2368,11 @@
                               MOV   M[EndColumnIndex], R1 
                               CALL  PrintObstacle
 
-                              MOV   R1, 14d
+                              MOV   R1, 13d
                               MOV   M[RowIndex], R1
-                              MOV   R1, 36d
+                              MOV   R1, 35d
                               MOV   M[ColumnIndex], R1 
-                              MOV   R1, 39d
+                              MOV   R1, 38d
                               MOV   M[EndColumnIndex], R1 
                               CALL  PrintObstacle
 
