@@ -44,6 +44,7 @@
       ColumnIndex             WORD        0d
       EndColumnIndex          WORD        0d
       EndRowIndex             WORD        0d
+      GameOver                STR         'Game Over', FIM_TEXTO
       InRUDM                  WORD        OFF   ; In Right Up Diagonal Movement
       InRDDM                  WORD        OFF   ; In Right Down Diagonal Movement
       InLUDM                  WORD        OFF   ; In Left Up Diagonal Movement
@@ -331,7 +332,11 @@
                         JMP.Z  VerifyRFUp
                         JMP.NZ VerifyRFDown
 
-      VerifyRFUp:       MOV    R1, 42d
+      VerifyRFUp:       MOV    R1, ON
+                        CMP    M[InLDDM], R1
+                        JMP.NZ VerifyRFEnd
+      
+                        MOV    R1, 42d
                         MOV    M[PosX], R1
                         MOV    R1, 16d
                         MOV    M[PosY], R1
@@ -362,7 +367,13 @@
                         JMP.Z  HitRF
                         JMP    VerifyRFEnd     
 
-      VerifyRFDown:     MOV    R1, 41d
+      VerifyRFDown:     MOV    R1, ON
+                        CMP    M[InRUDM], R1
+                        JMP.Z  VerifyRFEnd
+                        CMP    M[InLUDM], R1
+                        JMP.Z  VerifyRFEnd
+      
+                        MOV    R1, 41d
                         MOV    M[PosX], R1
                         MOV    R1, 21d
                         MOV    M[PosY], R1
@@ -372,28 +383,43 @@
                         CMP    R1, R2
                         JMP.Z  HitRF
 
-                        INC    M[PosX]
-                        DEC    M[PosY]
+                        DEC    M[PosY]    ; 40,21
                         CALL   VeRiFlipper
                         MOV    R2, M[RightFlipperHit]
                         CMP    R1, R2
                         JMP.Z  HitRF
 
-                        INC    M[PosX]
-                        DEC    M[PosY]
+                        INC    M[PosX]    ; 41,21
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF                        
+
+                        DEC    M[PosY]    ; 41,20
                         CALL   VeRiFlipper
                         MOV    R2, M[RightFlipperHit]
                         CMP    R1, R2
                         JMP.Z  HitRF
 
-                        INC    M[PosX]
-                        DEC    M[PosY]
+                        INC    M[PosX]    ; 42,20
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF                        
+
+                        DEC    M[PosY]    ; 42,19
                         CALL   VeRiFlipper
                         MOV    R2, M[RightFlipperHit]
                         CMP    R1, R2
                         JMP.Z  HitRF
 
-                        INC    M[PosX]
+                        INC    M[PosX]    ; 43,19
+                        CALL   VeRiFlipper
+                        MOV    R2, M[RightFlipperHit]
+                        CMP    R1, R2
+                        JMP.Z  HitRF
+
+                        INC    M[PosX]    ; 44,19
                         CALL   VeRiFlipper
                         MOV    R2, M[RightFlipperHit]
                         CMP    R1, R2
@@ -445,7 +471,11 @@
                         JMP.Z  VerifyLFUp
                         JMP.NZ VerifyLFDown
 
-      VerifyLFUp:       MOV    R1, 35d
+      VerifyLFUp:       MOV    R1, ON
+                        CMP    M[InRDDM], R1
+                        JMP.NZ VerifyLFEnd
+      
+                        MOV    R1, 35d
                         MOV    M[PosX], R1
                         MOV    R1, 16d
                         MOV    M[PosY], R1
@@ -476,7 +506,11 @@
                         JMP.Z  HitLF
                         JMP    VerifyLFEnd     
 
-      VerifyLFDown:     MOV    R1, 36d
+      VerifyLFDown:     MOV    R1, ON
+                        CMP    M[InLDDM], R1
+                        JMP.NZ VerifyLFEnd
+            
+                        MOV    R1, 36d
                         MOV    M[PosX], R1
                         MOV    R1, 21d
                         MOV    M[PosY], R1
@@ -670,7 +704,7 @@
                               ; Row Range => [14 - 16]
                               ; Column Range => [36 - 38]
 
-                              MOV    R1, 12d
+                              MOV    R1, 11d
                               MOV    M[PosY], R1
                               MOV    R1, ON
                               CALL   ObsIsInRowY
@@ -1311,20 +1345,6 @@
       WhereIsTheBall:         PUSH  R1
                               MOV   R1, ON
 
-                              ;--->> Right Flipper <<---;
-                              
-                              CALL  ResetFlags
-                              CALL  VerifyRFHit
-                              CMP   M[PosVerified], R1
-                              JMP.Z EndRowSearch  
-
-                              ;--->> Left Flipper <<---;
-                              
-                              CALL  ResetFlags
-                              CALL  VerifyLFHit
-                              CMP   M[PosVerified], R1
-                              JMP.Z EndRowSearch  
-
                               ;--->> Right Corner <<---;
 
                               CALL  ResetFlags
@@ -1382,7 +1402,21 @@
                               CALL  ResetFlags
                               CALL  VerifyingRowObstacle3
                               CMP   M[PosVerified], R1
-                              JMP.Z EndRowSearch                              
+                              JMP.Z EndRowSearch       
+
+                              ;--->> Right Flipper <<---;
+                              
+                              CALL  ResetFlags
+                              CALL  VerifyRFHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch  
+
+                              ;--->> Left Flipper <<---;
+                              
+                              CALL  ResetFlags
+                              CALL  VerifyLFHit
+                              CMP   M[PosVerified], R1
+                              JMP.Z EndRowSearch                         
 
                               ;--->> Right Wall <<---;
 
@@ -1483,6 +1517,13 @@
                         MOV   R1, CHARACTER_ZERO
                         CMP   M[NumLifes], R1
                         JMP.NZ EndResetBall
+
+                        MOV   R1, 21d
+                        MOV   M[RowIndex], R1
+                        MOV   R1, 5d
+                        MOV   M[ColumnIndex], R1
+                        CALL  StartGameOver
+
                         MOV   R1, ON
                         MOV   M[Stop], R1
 
@@ -2177,6 +2218,35 @@
                   RET
 
 ;------------------------------------------------------------------------------
+; Function GameOver Printing
+;------------------------------------------------------------------------------
+      StartGameOver:    PUSH  R1
+                        PUSH  R2
+                        PUSH  R3
+                        PUSH  R4
+                        MOV   R4, 0d
+
+      PrintGameOver:    MOV   R3, M[R4 + GameOver]
+                        CMP 	R3, FIM_TEXTO
+                        JMP.Z EndGameOver
+
+                        MOV   R1, M[ColumnIndex]
+                        MOV   R2, M[RowIndex]
+                        SHL   R2, ROW_SHIFT
+                        OR    R1, R2
+                        MOV   M[CURSOR], R1
+                        MOV   M[WRITE], R3
+                        INC   M[ColumnIndex]
+                        INC   R4
+                        JMP   PrintGameOver
+
+      EndGameOver:      POP   R4
+                        POP   R3
+                        POP   R2
+                        POP   R1
+                        RET
+
+;------------------------------------------------------------------------------
 ; Function Life Printing
 ;------------------------------------------------------------------------------
       StartLife:  PUSH  R1
@@ -2368,7 +2438,7 @@
                               MOV   M[EndColumnIndex], R1 
                               CALL  PrintObstacle
 
-                              MOV   R1, 13d
+                              MOV   R1, 12d
                               MOV   M[RowIndex], R1
                               MOV   R1, 35d
                               MOV   M[ColumnIndex], R1 
